@@ -1,0 +1,1207 @@
+// ============================
+// ГЛАВНЫЙ SWITCH — выбор команды плагина
+// ============================
+switch (figma.command) {
+
+  // 🔄 Заменяет выделенные объекты на соответствующие Instance
+  case "replace":
+    replaceWithInstance();
+    break;
+
+  // 📐 Выравнивает фреймы внутри секции или создает секцию, если выделены фреймы
+  case "autosection":
+    autoSectionAlign();
+    break;
+
+  // 🗂️ Оборачивает выделенные фреймы в новую секцию и выравнивает их в один ряд
+  case "wrap":
+    wrapOrAlignSectionClean();
+    break;
+
+  // ↔️ Увеличивает ширину выбранной секции на 540 px и сдвигает секции правее
+  case "expandSection":
+    expandSection();
+    break;
+
+  // ✂️ Нарезка / обработка объектов для 1px
+  case "slice":
+    wrapObjectsInSection();
+    break;
+
+  // 🖼️ Изменяет размеры текстовых объектов в артборде
+  case "art":
+    artTextResize();
+    break;
+
+  // ⚡ Выровнять все секции
+  case "alignAllSections":
+    alignAllSections();
+    break;
+
+  // 🟠 Создаёт плавающий тег с иконкой и текстом
+  case "floatingTag":
+    createMediumTag();
+    break;
+
+  // 🛑 Создаёт срочный тег с иконкой и текстом
+  case "urgentTag":
+    createUrgentTag();
+    break;
+
+ // ✅ Создаёт тег "Задача выполнена"
+case "doneTag":
+  createDoneTag();
+  break;
+
+  // 🔍 Находит все объекты с таким же именем и размером
+  case "findSimilar":
+    findSimilar();
+    break;
+
+  // ❓ FAQ — открывает окно с описанием всех функций
+  case "faq":
+    figma.showUI(__html__, { width: 860, height: 580, title: "FAQ" });
+    break;
+
+  default:
+    figma.closePlugin();
+}
+
+
+
+// ============================
+// Replace With Any Object
+// ============================
+function replaceWithInstance() {
+
+  const selection = figma.currentPage.selection;
+
+  if (selection.length < 2) {
+    figma.notify("Выдели объекты и ПОСЛЕДНИМ — эталонный");
+    figma.closePlugin();
+    return;
+  }
+
+  // последний выбранный объект — источник
+  const source = selection[selection.length - 1];
+
+  // все остальные — цели
+  const targets = selection.slice(0, selection.length - 1);
+
+  let replacedCount = 0;
+
+  targets.forEach(target => {
+
+    const parent = target.parent;
+    if (!parent) return;
+
+    const x = target.x;
+    const y = target.y;
+    const width = target.width;
+    const height = target.height;
+    const constraints = "constraints" in target ? target.constraints : null;
+
+    const index = parent.children.indexOf(target);
+
+    const newNode = source.clone();
+
+    parent.insertChild(index, newNode);
+
+    newNode.x = x;
+    newNode.y = y;
+
+    if ("resize" in newNode) {
+      try {
+        newNode.resize(width, height);
+      } catch (e) {}
+    }
+
+    if (constraints && "constraints" in newNode) {
+      newNode.constraints = constraints;
+    }
+
+    target.remove();
+    replacedCount++;
+
+  });
+
+  figma.notify(`Заменено объектов: ${replacedCount} 🚀`);
+  figma.closePlugin();
+}
+
+
+// ============================
+// 2️⃣ Auto Section Align (БЕЗ изменения порядка слоёв)
+// ============================
+function autoSectionAlign() {
+  const GAP = 80;
+  const PADDING = 100;
+  const SECOND_ROW_OFFSET = 160;
+  const EXTRA = 300;
+
+  const sel = figma.currentPage.selection;
+  let message = "";
+
+  function getFrames(nodes) {
+    return nodes.filter(
+      c => c.type === "FRAME" ||
+           c.type === "INSTANCE" ||
+           c.type === "COMPONENT"
+    );
+  }
+
+  function removeSecondRow(section, topRowMaxY) {
+    section.children
+      .filter(c =>
+        (c.type === "FRAME" || c.type === "INSTANCE" || c.type === "COMPONENT") &&
+        c.y > topRowMaxY
+      )
+      .forEach(c => c.remove());
+  }
+
+  function alignTopRow(frames) {
+    if (frames.length === 0) return;
+
+    // ВАЖНО: сортируем только копию массива
+    const sorted = [...frames].sort((a, b) => a.x - b.x);
+
+    let currentX = PADDING;
+
+    sorted.forEach(frame => {
+      frame.x = currentX;
+      frame.y = PADDING;
+      currentX += frame.width + GAP;
+    });
+  }
+
+  function duplicateSecondRow(frames, parent) {
+    if (frames.length === 0) return [];
+
+    const maxHeight = Math.max(...frames.map(f => f.height));
+    const clones = [];
+
+    frames.forEach(frame => {
+      const clone = frame.clone();
+      clone.x = frame.x;
+      clone.y = frame.y + maxHeight + SECOND_ROW_OFFSET;
+      parent.appendChild(clone);
+      clones.push(clone);
+    });
+
+    return clones;
+  }
+
+  function resizeSection(section) {
+    const frames = getFrames(section.children);
+    if (frames.length === 0) return;
+
+    const minX = Math.min(...frames.map(f => f.x));
+    const minY = Math.min(...frames.map(f => f.y));
+    const maxX = Math.max(...frames.map(f => f.x + f.width));
+    const maxY = Math.max(...frames.map(f => f.y + f.height));
+
+    section.resizeWithoutConstraints(
+      maxX - minX + PADDING * 2,
+      maxY - minY + PADDING * 2
+    );
+  }
+
+  if (sel.length === 1 && sel[0].type === "SECTION") {
+
+    const section = sel[0];
+    const allFrames = getFrames(section.children);
+
+    if (allFrames.length === 0) {
+      message = "В секции нет фреймов";
+    } else {
+
+      const minY = Math.min(...allFrames.map(f => f.y));
+      const maxHeight = Math.max(...allFrames.map(f => f.height));
+
+      const topRowFrames = allFrames.filter(
+        f => f.y <= minY + maxHeight / 2
+      );
+
+      const topMaxHeight = Math.max(...topRowFrames.map(f => f.height));
+
+      removeSecondRow(section, minY + topMaxHeight + 1);
+
+      section.resizeWithoutConstraints(
+        section.width + EXTRA,
+        section.height + EXTRA
+      );
+
+      alignTopRow(topRowFrames);
+
+      let secondRow = [];
+
+      if (topMaxHeight > 960) {
+        secondRow = duplicateSecondRow(topRowFrames, section);
+      }
+
+      resizeSection(section);
+
+      if (secondRow.length > 0) {
+        figma.currentPage.selection = secondRow;
+      }
+
+      message = "Фреймы выровнены" +
+        (secondRow.length > 0 ? " и второй ряд дублирован ✅" : " ✅");
+    }
+
+  } else if (sel.length > 0) {
+
+    const framesToWrap = getFrames(sel);
+
+    if (framesToWrap.length === 0) {
+      message = "Выделите хотя бы один фрейм";
+    } else {
+
+      const newSection = figma.createSection();
+      newSection.name = "Экраны";
+      figma.currentPage.appendChild(newSection);
+
+      newSection.x = Math.min(...framesToWrap.map(f => f.x)) - PADDING;
+      newSection.y = Math.min(...framesToWrap.map(f => f.y)) - PADDING;
+
+      framesToWrap.forEach(f => newSection.appendChild(f));
+
+      alignTopRow(framesToWrap);
+
+      const topMaxHeight = Math.max(...framesToWrap.map(f => f.height));
+
+      let secondRow = [];
+
+      if (topMaxHeight > 960) {
+        secondRow = duplicateSecondRow(framesToWrap, newSection);
+      }
+
+      resizeSection(newSection);
+
+      if (secondRow.length > 0) {
+        figma.currentPage.selection = secondRow;
+      }
+
+      message = "Секция создана и выровнена" +
+        (secondRow.length > 0 ? ", второй ряд дублирован ✅" : " ✅");
+    }
+
+  } else {
+    message = "Выделите секцию или фреймы";
+  }
+
+  figma.notify(message);
+  figma.closePlugin();
+}
+
+// ============================
+// 3️⃣ Wrap Objects in Section
+// ============================
+function wrapObjectsInSection() {
+  const INNER_PADDING = 1;
+  const GAP = 80;
+  const SECTION_PADDING = 100;
+
+  const selection = figma.currentPage.selection;
+
+  if (!selection || selection.length === 0) {
+    figma.notify("Выделите хотя бы один объект");
+    figma.closePlugin();
+    return;
+  }
+
+  const verticalWrapper = figma.createFrame();
+  verticalWrapper.name = 'Vertical Auto-layout Wrapper';
+  verticalWrapper.fills = [];
+  verticalWrapper.clipsContent = false;
+
+  verticalWrapper.layoutMode = 'VERTICAL';
+  verticalWrapper.primaryAxisSizingMode = 'AUTO';
+  verticalWrapper.counterAxisSizingMode = 'AUTO';
+  verticalWrapper.itemSpacing = GAP;
+  verticalWrapper.paddingTop = INNER_PADDING;
+  verticalWrapper.paddingBottom = INNER_PADDING;
+  verticalWrapper.paddingLeft = INNER_PADDING;
+  verticalWrapper.paddingRight = INNER_PADDING;
+
+  figma.currentPage.appendChild(verticalWrapper);
+
+  selection.forEach(node => {
+    const wrapper = figma.createFrame();
+    wrapper.name = `Wrapper for ${node.name}`;
+    wrapper.fills = [];
+    wrapper.clipsContent = false;
+
+    wrapper.resize(node.width + INNER_PADDING * 2, node.height + INNER_PADDING * 2);
+
+    wrapper.appendChild(node);
+    node.x = INNER_PADDING;
+    node.y = INNER_PADDING;
+
+    verticalWrapper.appendChild(wrapper);
+  });
+
+  const wrappers = [...verticalWrapper.children];
+  wrappers.forEach(wrapper => {
+    const abs = wrapper.absoluteTransform;
+    wrapper.x = abs[0][2];
+    wrapper.y = abs[1][2];
+    figma.currentPage.appendChild(wrapper);
+  });
+  verticalWrapper.remove();
+
+  const section = figma.createSection();
+  section.name = "Нарезка";
+  figma.currentPage.appendChild(section);
+
+  let currentY = SECTION_PADDING;
+  let maxWidth = 0;
+
+  wrappers.forEach(wrapper => {
+    section.appendChild(wrapper);
+    wrapper.x = SECTION_PADDING;
+    wrapper.y = currentY;
+
+    currentY += wrapper.height + GAP;
+    maxWidth = Math.max(maxWidth, wrapper.width);
+  });
+
+  section.resizeWithoutConstraints(maxWidth + SECTION_PADDING * 2, currentY - GAP + SECTION_PADDING);
+
+  figma.viewport.scrollAndZoomIntoView([section]);
+  figma.notify("Нарезка завершена ✅");
+  figma.closePlugin();
+}
+
+// ============================
+// 4️⃣ Art Text Resize (MULTI)
+// ============================
+
+function roundToEvenDown(num) {
+  let rounded = Math.floor(num);
+  if (rounded % 2 !== 0) rounded += 1;
+  return rounded;
+}
+
+async function artTextResize() {
+  const selection = figma.currentPage.selection;
+
+  if (selection.length === 0) {
+    figma.notify("Ничего не выделено");
+    figma.closePlugin();
+    return;
+  }
+
+  const objects = selection.filter(node => node.type !== "TEXT");
+  const texts = selection.filter(node => node.type === "TEXT");
+
+  if (objects.length === 0) {
+    figma.notify("Нет объектов для расчёта");
+    figma.closePlugin();
+    return;
+  }
+
+  if (texts.length !== objects.length * 2) {
+    figma.notify("На каждый объект должно быть 2 текстовых слоя");
+    figma.closePlugin();
+    return;
+  }
+
+  const templates = [160, 320, 540];
+
+  for (let i = 0; i < objects.length; i++) {
+
+    const objectNode = objects[i];
+    const textNode1 = texts[i * 2];
+    const textNode2 = texts[i * 2 + 1];
+
+    await figma.loadFontAsync(textNode1.fontName);
+    await figma.loadFontAsync(textNode2.fontName);
+
+    const width = objectNode.width;
+    const height = objectNode.height;
+
+    // ----------------------------
+    // 1️⃣ Первый текст — реальные размеры
+    // ----------------------------
+    textNode1.characters =
+      Math.round(width) + "x" + Math.round(height) + "px";
+
+    // ----------------------------
+    // 2️⃣ Расчёт размеров для Арта
+    // ----------------------------
+    let targetWidth;
+    let targetHeight;
+    let scaleMultiplier = 3;
+
+    // 🔥 НОВАЯ ЛОГИКА:
+    // объект маленький ТОЛЬКО если обе стороны <= 160
+    if (width <= 160 && height <= 160) {
+      targetWidth = 160;
+      targetHeight = (height / width) * 160;
+      scaleMultiplier = 4;
+
+    } else {
+      // Выбираем ближайший template
+      targetWidth = templates[templates.length - 1];
+
+      for (let j = 0; j < templates.length; j++) {
+        if (width <= templates[j]) {
+          targetWidth = templates[j];
+          break;
+        }
+      }
+
+      const scale = targetWidth / width;
+      targetHeight = height * scale;
+    }
+
+    const finalWidth = roundToEvenDown(targetWidth * scaleMultiplier);
+    const finalHeight = roundToEvenDown(targetHeight * scaleMultiplier);
+
+    // ----------------------------
+    // 3️⃣ Второй текст — размеры для Арта
+    // ----------------------------
+    textNode2.characters =
+      finalWidth + "x" + finalHeight + "px";
+  }
+
+  figma.notify("Все размеры проставлены ✅");
+  figma.closePlugin();
+}
+
+
+
+// ============================
+// Обернуть или выровнять секцию (без дублей)
+// ============================
+function wrapOrAlignSectionClean() {
+  const GAP = 80;
+  const PADDING = 100;
+
+  const sel = figma.currentPage.selection;
+  if (!sel.length) {
+    figma.notify("Выделите секцию или фреймы");
+    figma.closePlugin();
+    return;
+  }
+
+  function getFrames(nodes) {
+    return nodes.filter(n => "x" in n && "y" in n && "width" in n && "height" in n);
+  }
+
+  // Выравнивание по принципу твоей alignRow
+  function alignRowUniversal(frames, orientation) {
+    if (!frames.length) return;
+
+    let sorted;
+    if (orientation === "vertical") {
+      sorted = [...frames].sort((a, b) => a.y - b.y); // сортируем по Y
+      let currentY = PADDING;
+      sorted.forEach(f => {
+        f.x = PADDING; // левый край
+        f.y = currentY;
+        currentY += f.height + GAP;
+      });
+    } else {
+      sorted = [...frames].sort((a, b) => a.x - b.x); // сортируем по X
+      let currentX = PADDING;
+      sorted.forEach(f => {
+        f.x = currentX;
+        f.y = PADDING; // верхний край
+        currentX += f.width + GAP;
+      });
+    }
+  }
+
+  function resizeSection(section) {
+    const frames = getFrames(section.children);
+    if (!frames.length) return;
+
+    const minX = Math.min(...frames.map(f => f.x));
+    const minY = Math.min(...frames.map(f => f.y));
+    const maxX = Math.max(...frames.map(f => f.x + f.width));
+    const maxY = Math.max(...frames.map(f => f.y + f.height));
+
+    section.resizeWithoutConstraints(
+      maxX - minX + PADDING * 2,
+      maxY - minY + PADDING * 2
+    );
+  }
+
+  // === Если выделена секция ===
+  if (sel.length === 1 && sel[0].type === "SECTION") {
+    const section = sel[0];
+    const frames = getFrames(section.children);
+    if (!frames.length) {
+      figma.notify("В секции нет фреймов");
+    } else {
+      const orientation = section.width >= section.height ? "horizontal" : "vertical";
+      alignRowUniversal(frames, orientation); // принцип alignRow
+      resizeSection(section);
+      figma.notify(`Секция выровнена ${orientation} ✅`);
+    }
+  } 
+  // === Если выделены фреймы ===
+  else {
+    const framesToWrap = getFrames(sel);
+    if (!framesToWrap.length) {
+      figma.notify("Выделите хотя бы один фрейм");
+      figma.closePlugin();
+      return;
+    }
+
+    const section = figma.createSection();
+    section.name = "Экраны";
+    figma.currentPage.appendChild(section);
+    section.x = Math.min(...framesToWrap.map(f => f.x)) - PADDING;
+    section.y = Math.min(...framesToWrap.map(f => f.y)) - PADDING;
+
+    // Перемещаем фреймы в секцию без сортировки — порядок сохраняется
+    framesToWrap.forEach(f => section.appendChild(f));
+
+    // Определяем ориентацию по bounding box выделенных фреймов
+    const totalWidth = Math.max(...framesToWrap.map(f => f.x + f.width)) - Math.min(...framesToWrap.map(f => f.x));
+    const totalHeight = Math.max(...framesToWrap.map(f => f.y + f.height)) - Math.min(...framesToWrap.map(f => f.y));
+    const orientation = totalWidth >= totalHeight ? "horizontal" : "vertical";
+
+    alignRowUniversal(framesToWrap, orientation); // принцип alignRow
+    resizeSection(section);
+
+    figma.currentPage.selection = [section];
+    figma.notify(`Секция создана и выровнена ${orientation} ✅`);
+  }
+
+  figma.closePlugin();
+}
+
+// ============================================
+// ⚡ ВЫРОВНЯТЬ ВСЕ СЕКЦИИ С КОМПОНЕНТОМ В СВОЕМ РЯДУ
+// ============================================
+function alignAllSections() {
+  const SECTION_GAP = 240;
+  const ROW_GAP = 240;
+
+  function isVisible(n) { return n && n.visible !== false; }
+  function isUnlocked(n) { return n && !n.locked; }
+
+  // 1️⃣ Берём только корневые секции
+  const sections = figma.currentPage.children.filter(
+    n => n.type === "SECTION" && isVisible(n) && isUnlocked(n)
+  );
+
+  if (sections.length === 0) {
+    figma.notify("Нет доступных секций для выравнивания");
+    figma.closePlugin();
+    return;
+  }
+
+  // 2️⃣ Выделяем секцию компонентов
+  const componentNames = [
+    "Компоненты", "Components", "Local Components",
+    "Локальные Компоненты", "Локальные компоненты", "Local сomponents"
+  ];
+
+  let componentSection = null;
+  const otherSections = [];
+
+  for (const s of sections) {
+    if (componentNames.includes(s.name)) {
+      componentSection = s;
+    } else {
+      otherSections.push(s);
+    }
+  }
+
+  // 3️⃣ Создаём proxy для остальных секций
+  const proxies = otherSections.map(section => {
+    const proxy = figma.createFrame();
+    proxy.name = "__proxy__";
+    proxy.layoutMode = "NONE";
+    proxy.resize(section.width, section.height);
+    proxy.x = section.x;
+    proxy.y = section.y;
+    return { section, proxy };
+  });
+
+  // 4️⃣ Группируем секции по рядам (F-паттерн)
+  function groupByRows(items) {
+    const rows = [];
+    items.sort((a, b) => a.proxy.y - b.proxy.y);
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (i === 0) {
+        rows.push({ items: [item], anchorY: item.proxy.y });
+        continue;
+      }
+      const prevRow = rows[rows.length - 1];
+      const prevItem = prevRow.items[prevRow.items.length - 1];
+      if (item.proxy.y - prevItem.proxy.y > prevItem.proxy.height / 2) {
+        rows.push({ items: [item], anchorY: item.proxy.y });
+      } else {
+        prevRow.items.push(item);
+      }
+    }
+    return rows;
+  }
+
+  const rows = groupByRows(proxies);
+
+  // 5️⃣ Вычисляем позиции по F-паттерну
+  function layoutRow(row, startY) {
+    row.sort((a, b) => a.proxy.x - b.proxy.x);
+    let currentX = 0;
+    let maxHeight = 0;
+    for (const item of row) {
+      item.proxy.x = currentX;
+      item.proxy.y = startY;
+      currentX += item.proxy.width + SECTION_GAP;
+      maxHeight = Math.max(maxHeight, item.proxy.height);
+    }
+    return maxHeight;
+  }
+
+  let currentY = rows.length ? rows[0].anchorY : 0;
+  for (const row of rows) {
+    const h = layoutRow(row.items, currentY);
+    currentY += h + ROW_GAP;
+  }
+
+  // 6️⃣ Применяем позиции к секциям
+  for (const { section, proxy } of proxies) {
+    section.x = proxy.x;
+    section.y = proxy.y;
+  }
+
+  // 7️⃣ Удаляем proxy
+  for (const { proxy } of proxies) {
+    proxy.remove();
+  }
+
+  // 8️⃣ Вставляем секцию компонентов в её ряд
+  if (componentSection) {
+    // Найти ряд, к которому относится компонент-секция
+    // Берём все секции и ищем ближайшую по Y
+    const nearestRow = otherSections.reduce((nearest, s) => {
+      const distance = Math.abs(s.y - componentSection.y);
+      if (!nearest || distance < nearest.distance) {
+        return { section: s, distance };
+      }
+      return nearest;
+    }, null);
+
+    // Если есть хотя бы одна секция в ряду, выравниваем компонент левее всех в этом ряду
+    if (nearestRow) {
+      // Составляем все секции в том же ряду (по близости Y)
+      const rowSections = otherSections.filter(s =>
+        Math.abs(s.y - nearestRow.section.y) <= nearestRow.section.height / 2
+      );
+
+      const minX = Math.min(...rowSections.map(s => s.x));
+      componentSection.x = minX - componentSection.width - SECTION_GAP;
+      componentSection.y = nearestRow.section.y; // выравниваем по верхнему краю ряда
+    }
+  }
+
+  figma.notify(`⚡ Готово! Перестроено секций: ${sections.length}`);
+  figma.closePlugin();
+}
+// ============================
+// Создать тег "Средний приоритет"
+// ============================
+async function createMediumTag() {
+  try {
+    const selection = figma.currentPage.selection;
+
+    if (!selection || selection.length === 0) {
+      figma.notify("⚠️ Выделите объект");
+      figma.closePlugin();
+      return;
+    }
+
+    const target = selection[0];
+
+    // ============================
+    // ЕСЛИ ЭТО УЖЕ ОДИН ИЗ НАШИХ ТЕГОВ
+    // ============================
+    if (
+      target.name === "FloatingNote" ||
+      target.name === "FloatingUrgent" ||
+      target.name === "FloatingDone"
+    ) {
+
+      const iconFrame = target.children[0];
+      const textFrame = target.children[1];
+
+      if (!iconFrame || !textFrame) {
+        figma.notify("⚠️ Неверная структура тега");
+        figma.closePlugin();
+        return;
+      }
+
+      const iconText = iconFrame.children[0];
+      const labelText = textFrame.children[0];
+
+      await figma.loadFontAsync({ family: "Montserrat", style: "Bold" });
+
+      const orange = { r: 1, g: 0.694, b: 0.325 };
+
+      // --- иконка ---
+      iconFrame.fills = [{ type: "SOLID", color: orange, opacity: 0.2 }];
+      iconText.characters = "⚠️";
+      iconText.fills = [{ type: "SOLID", color: { r: 0.341, g: 0.137, b: 0 } }];
+
+      // --- текстовый блок ---
+      textFrame.fills = [{ type: "SOLID", color: orange }];
+      labelText.fills = [{ type: "SOLID", color: { r: 0.341, g: 0.137, b: 0 } }];
+
+      target.name = "FloatingNote";
+
+      figma.notify("✅ Приоритет обновлён");
+
+      figma.closePlugin();
+      return;
+    }
+
+    // ============================
+    // ИНАЧЕ СОЗДАЁМ НОВЫЙ ТЕГ
+    // ============================
+
+    const posX = target.x;
+    const posY = target.y;
+
+    if (target.remove) {
+      target.remove();
+    }
+
+    await figma.loadFontAsync({ family: "Montserrat", style: "Bold" });
+
+    const orange = { r: 1, g: 0.694, b: 0.325 };
+
+    const parent = figma.createFrame();
+    parent.name = "FloatingNote";
+    parent.layoutMode = "HORIZONTAL";
+    parent.primaryAxisSizingMode = "AUTO";
+    parent.counterAxisSizingMode = "AUTO";
+    parent.itemSpacing = 24;
+    parent.fills = [];
+    parent.x = posX;
+    parent.y = posY;
+
+    const iconFrame = figma.createFrame();
+    iconFrame.layoutMode = "HORIZONTAL";
+    iconFrame.resize(164, 164);
+    iconFrame.cornerRadius = 24;
+    iconFrame.fills = [{ type: "SOLID", color: orange, opacity: 0.2 }];
+    iconFrame.primaryAxisAlignItems = "CENTER";
+    iconFrame.counterAxisAlignItems = "CENTER";
+
+    const iconText = figma.createText();
+    iconText.fontName = { family: "Montserrat", style: "Bold" };
+    iconText.fontSize = 96;
+    iconText.characters = "⚠️";
+    iconText.fills = [{ type: "SOLID", color: { r: 0.341, g: 0.137, b: 0 } }];
+
+    iconFrame.appendChild(iconText);
+
+    const textFrame = figma.createFrame();
+    textFrame.layoutMode = "HORIZONTAL";
+    textFrame.primaryAxisSizingMode = "AUTO";
+    textFrame.counterAxisSizingMode = "AUTO";
+    textFrame.paddingLeft = 48;
+    textFrame.paddingRight = 48;
+    textFrame.paddingTop = 48;
+    textFrame.paddingBottom = 48;
+    textFrame.cornerRadius = 24;
+    textFrame.fills = [{ type: "SOLID", color: orange }];
+
+    const labelText = figma.createText();
+    labelText.fontName = { family: "Montserrat", style: "Bold" };
+    labelText.fontSize = 56;
+    labelText.characters = "Средний приоритет";
+    labelText.fills = [{ type: "SOLID", color: { r: 0.341, g: 0.137, b: 0 } }];
+
+    textFrame.appendChild(labelText);
+    textFrame.layoutGrow = 1;
+
+    parent.appendChild(iconFrame);
+    parent.appendChild(textFrame);
+
+    figma.currentPage.appendChild(parent);
+    parent.resize(920, parent.height);
+
+    figma.currentPage.selection = [labelText];
+
+    figma.notify("✅ Тег добавлен");
+
+    figma.closePlugin();
+
+  } catch (err) {
+    figma.notify("❌ Ошибка: " + (err.message || err));
+    figma.closePlugin();
+  }
+}
+// ============================
+// Создать Срочный тег с иконкой и текстом
+// ============================
+async function createUrgentTag() {
+  try {
+    const selection = figma.currentPage.selection;
+
+    if (!selection || selection.length === 0) {
+      figma.notify("⚠️ Выделите объект");
+      figma.closePlugin();
+      return;
+    }
+
+    const target = selection[0];
+
+    // ============================
+    // ЕСЛИ ЭТО УЖЕ ОДИН ИЗ НАШИХ ТЕГОВ
+    // ============================
+    if (
+      target.name === "FloatingNote" ||
+      target.name === "FloatingUrgent" ||
+      target.name === "FloatingDone"
+    ) {
+
+      const iconFrame = target.children[0];
+      const textFrame = target.children[1];
+
+      if (!iconFrame || !textFrame) {
+        figma.notify("⚠️ Неверная структура тега");
+        figma.closePlugin();
+        return;
+      }
+
+      const iconText = iconFrame.children[0];
+      const labelText = textFrame.children[0];
+
+      await figma.loadFontAsync({ family: "Montserrat", style: "Bold" });
+
+      const red = { r: 1, g: 0.165, b: 0 };
+
+      iconFrame.fills = [{ type: "SOLID", color: red, opacity: 0.2 }];
+      iconText.characters = "⏰";
+      iconText.fills = [{ type: "SOLID", color: red }];
+
+      textFrame.fills = [{ type: "SOLID", color: red }];
+      labelText.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+
+      target.name = "FloatingUrgent";
+
+      figma.notify("✅ Приоритет обновлён");
+
+      figma.closePlugin();
+      return;
+    }
+
+    const posX = target.x;
+    const posY = target.y;
+
+    if (target.remove) {
+      target.remove();
+    }
+
+    await figma.loadFontAsync({ family: "Montserrat", style: "Bold" });
+
+    const red = { r: 1, g: 0.165, b: 0 };
+
+    const parent = figma.createFrame();
+    parent.name = "FloatingUrgent";
+    parent.layoutMode = "HORIZONTAL";
+    parent.primaryAxisSizingMode = "AUTO";
+    parent.counterAxisSizingMode = "AUTO";
+    parent.itemSpacing = 24;
+    parent.fills = [];
+    parent.x = posX;
+    parent.y = posY;
+
+    const iconFrame = figma.createFrame();
+    iconFrame.layoutMode = "HORIZONTAL";
+    iconFrame.resize(164, 164);
+    iconFrame.cornerRadius = 24;
+    iconFrame.fills = [{ type: "SOLID", color: red, opacity: 0.2 }];
+    iconFrame.primaryAxisAlignItems = "CENTER";
+    iconFrame.counterAxisAlignItems = "CENTER";
+
+    const iconText = figma.createText();
+    iconText.fontName = { family: "Montserrat", style: "Bold" };
+    iconText.fontSize = 96;
+    iconText.characters = "⏰";
+    iconText.fills = [{ type: "SOLID", color: red }];
+
+    iconFrame.appendChild(iconText);
+
+    const textFrame = figma.createFrame();
+    textFrame.layoutMode = "HORIZONTAL";
+    textFrame.primaryAxisSizingMode = "AUTO";
+    textFrame.counterAxisSizingMode = "AUTO";
+    textFrame.paddingLeft = 48;
+    textFrame.paddingRight = 48;
+    textFrame.paddingTop = 48;
+    textFrame.paddingBottom = 48;
+    textFrame.cornerRadius = 24;
+    textFrame.fills = [{ type: "SOLID", color: red }];
+
+    const labelText = figma.createText();
+    labelText.fontName = { family: "Montserrat", style: "Bold" };
+    labelText.fontSize = 56;
+    labelText.characters = "Высокий приоритет";
+    labelText.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+
+    textFrame.appendChild(labelText);
+    textFrame.layoutGrow = 1;
+
+    parent.appendChild(iconFrame);
+    parent.appendChild(textFrame);
+
+    figma.currentPage.appendChild(parent);
+    parent.resize(920, parent.height);
+
+    figma.currentPage.selection = [labelText];
+
+    figma.notify("✅ Срочный тег добавлен");
+
+    figma.closePlugin();
+
+  } catch (err) {
+    figma.notify("❌ Ошибка: " + (err.message || err));
+    figma.closePlugin();
+  }
+}
+// ============================
+// Создать или обновить тег "Задача выполнена"
+// ============================
+async function createDoneTag() {
+  try {
+
+    const selection = figma.currentPage.selection;
+
+    if (!selection || selection.length === 0) {
+      figma.notify("⚠️ Выделите объект");
+      figma.closePlugin();
+      return;
+    }
+
+    const target = selection[0];
+
+    const frameColor = { r: 0.0157, g: 1, b: 0 };   // #04FF00
+    const textColor = { r: 0.078, g: 0.733, b: 0.067 }; // #14BB11
+
+    await figma.loadFontAsync({ family: "Montserrat", style: "Bold" });
+
+    // ============================
+    // ЕСЛИ ВЫДЕЛЕН УЖЕ ТЕГ
+    // ============================
+    if (
+      target.name === "FloatingNote" ||
+      target.name === "FloatingUrgent" ||
+      target.name === "FloatingDone"
+    ) {
+
+      const iconFrame = target.children[0];
+      const textFrame = target.children[1];
+
+      if (!iconFrame || !textFrame) {
+        figma.notify("⚠️ Неверная структура тега");
+        figma.closePlugin();
+        return;
+      }
+
+      const iconText = iconFrame.children[0];
+      const labelText = textFrame.children[0];
+
+      // иконка
+      iconFrame.fills = [{
+        type: "SOLID",
+        color: frameColor,
+        opacity: 0.15
+      }];
+
+      iconText.characters = "✅";
+      iconText.fills = [{ type: "SOLID", color: textColor }];
+
+      // текстовый блок
+      textFrame.fills = [{
+        type: "SOLID",
+        color: frameColor,
+        opacity: 0.15
+      }];
+
+      // текст НЕ меняем
+      labelText.fills = [{ type: "SOLID", color: textColor }];
+
+      target.name = "FloatingDone";
+
+      figma.notify("✅ Тег обновлён");
+
+      figma.closePlugin();
+      return;
+    }
+
+    // ============================
+    // СОЗДАНИЕ НОВОГО ТЕГА
+    // ============================
+
+    const posX = target.x;
+    const posY = target.y;
+
+    if (target.remove) {
+      target.remove();
+    }
+
+    const parent = figma.createFrame();
+    parent.name = "FloatingDone";
+    parent.layoutMode = "HORIZONTAL";
+    parent.primaryAxisSizingMode = "AUTO";
+    parent.counterAxisSizingMode = "AUTO";
+    parent.itemSpacing = 24;
+    parent.fills = [];
+    parent.x = posX;
+    parent.y = posY;
+
+    // --- FRAME ИКОНКИ ---
+
+    const iconFrame = figma.createFrame();
+    iconFrame.layoutMode = "HORIZONTAL";
+    iconFrame.resize(164, 164);
+    iconFrame.cornerRadius = 24;
+
+    iconFrame.fills = [{
+      type: "SOLID",
+      color: frameColor,
+      opacity: 0.15
+    }];
+
+    iconFrame.primaryAxisAlignItems = "CENTER";
+    iconFrame.counterAxisAlignItems = "CENTER";
+
+    const iconText = figma.createText();
+    iconText.fontName = { family: "Montserrat", style: "Bold" };
+    iconText.fontSize = 96;
+    iconText.characters = "✅";
+    iconText.fills = [{ type: "SOLID", color: textColor }];
+
+    iconFrame.appendChild(iconText);
+
+    // --- FRAME ТЕКСТА ---
+
+    const textFrame = figma.createFrame();
+    textFrame.layoutMode = "HORIZONTAL";
+    textFrame.primaryAxisSizingMode = "AUTO";
+    textFrame.counterAxisSizingMode = "AUTO";
+
+    textFrame.paddingLeft = 48;
+    textFrame.paddingRight = 48;
+    textFrame.paddingTop = 48;
+    textFrame.paddingBottom = 48;
+
+    textFrame.cornerRadius = 24;
+
+    textFrame.fills = [{
+      type: "SOLID",
+      color: frameColor,
+      opacity: 0.15
+    }];
+
+    const labelText = figma.createText();
+    labelText.fontName = { family: "Montserrat", style: "Bold" };
+    labelText.fontSize = 56;
+    labelText.characters = "Задача выполнена";
+    labelText.fills = [{ type: "SOLID", color: textColor }];
+
+    textFrame.appendChild(labelText);
+    textFrame.layoutGrow = 1;
+
+    parent.appendChild(iconFrame);
+    parent.appendChild(textFrame);
+
+    figma.currentPage.appendChild(parent);
+    parent.resize(920, parent.height);
+
+    figma.currentPage.selection = [labelText];
+
+    figma.notify("✅ Тег добавлен");
+
+    figma.closePlugin();
+
+  } catch (err) {
+    figma.notify("❌ Ошибка: " + (err.message || err));
+    figma.closePlugin();
+  }
+}
+
+
+// ============================
+// Find Similar — Найти похожие
+// ============================
+function findSimilar() {
+  const selection = figma.currentPage.selection;
+
+  if (selection.length !== 1) {
+    figma.notify("Выдели один объект");
+    figma.closePlugin();
+    return;
+  }
+
+  const target = selection[0];
+  const targetName = target.name;
+  const targetWidth = Math.round(target.width);
+  const targetHeight = Math.round(target.height);
+
+  figma.notify("Идет поиск, подождите...", { timeout: Infinity });
+
+  setTimeout(() => {
+    const candidates = figma.currentPage.findAllWithCriteria({ types: [target.type] });
+
+    const matches = candidates.filter(node =>
+      node.name === targetName &&
+      Math.round(node.width) === targetWidth &&
+      Math.round(node.height) === targetHeight
+    );
+
+    if (matches.length <= 1) {
+      figma.notify("Похожих объектов не найдено");
+      figma.closePlugin();
+      return;
+    }
+
+    figma.currentPage.selection = matches;
+    figma.viewport.scrollAndZoomIntoView(matches);
+    figma.notify(`Найдено ${matches.length} похожих объектов`);
+    figma.closePlugin();
+  }, 50);
+}
+
+
+
+// ============================
+// Expand Section — Увеличить секцию
+// ============================
+function expandSection() {
+  const selection = figma.currentPage.selection;
+
+  if (selection.length !== 1 || selection[0].type !== "SECTION") {
+    figma.notify("Выдели одну секцию");
+    figma.closePlugin();
+    return;
+  }
+
+  const section = selection[0];
+  const originalRight = section.x + section.width;
+
+  // Расширяем секцию на 620 px вправо
+  section.resizeWithoutConstraints(section.width + 620, section.height);
+
+  // Сдвигаем все секции правее на 620 px
+  const allSections = figma.currentPage.findAll(node => node.type === "SECTION");
+  for (const s of allSections) {
+    if (s.id !== section.id && s.x >= originalRight) {
+      s.x += 620;
+    }
+  }
+
+  figma.notify("Секция расширена на 620 px");
+  figma.closePlugin();
+}
