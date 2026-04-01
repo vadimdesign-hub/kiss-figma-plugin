@@ -387,7 +387,7 @@ async function artTextResize() {
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
-    figma.notify("Ничего не выделено");
+    figma.notify("Сначала выдели картинку/арт, потом первый размер, потом второй");
     figma.closePlugin();
     return;
   }
