@@ -1,5 +1,5 @@
 {
-  "name": "Plyneta",
+  "name": "Kiss",
   "id": "playneta-design-utilities",
   "api": "1.0.0",
   "main": "code.js",
@@ -17,6 +17,10 @@
     {
       "name": "📐 Выровнять + темная",
       "command": "autosection"
+    },
+    {
+      "name": "➕ Дублировать",
+      "command": "duplicate"
     },
     {
       "name": "🗂️ Обернуть + выровнять",
@@ -55,6 +59,10 @@
     {
       "name": "📖 FAQ",
       "command": "faq"
+    },
+    {
+      "name": "🎛️ Панель инструментов",
+      "command": "ui"
     }
   ]
 }

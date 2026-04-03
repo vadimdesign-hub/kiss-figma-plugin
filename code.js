@@ -1,6 +1,9 @@
 // ============================
 // ГЛАВНЫЙ SWITCH — выбор команды плагина
 // ============================
+let keepAlive = false;
+function tryClose() { if (!keepAlive) tryClose(); }
+
 switch (figma.command) {
 
   // 🔄 Заменяет выделенные объекты на соответствующие Instance
@@ -21,6 +24,11 @@ switch (figma.command) {
   // ↔️ Увеличивает ширину выбранной секции на 540 px и сдвигает секции правее
   case "expandSection":
     expandSection();
+    break;
+
+  // 🪄 Дублирует фрейм и расширяет секцию
+  case "duplicate":
+    duplicateFrame();
     break;
 
   // ✂️ Нарезка / обработка объектов для 1px
@@ -60,12 +68,46 @@ case "doneTag":
 
   // ❓ FAQ — открывает окно с описанием всех функций
   case "faq":
-    figma.showUI(__html__, { width: 860, height: 580, title: "FAQ" });
+    figma.showUI(__html__, { width: 860, height: 610, title: "FAQ" });
+    break;
+
+  // 🎛️ UI — плавающая панель с кнопками
+  case "ui":
+    keepAlive = true;
+    figma.showUI(__html__, { width: 320, height: 46, title: "Kiss" });
+    figma.ui.postMessage({ type: "toolbar" });
     break;
 
   default:
-    figma.closePlugin();
+    tryClose();
 }
+
+figma.ui.onmessage = async (msg) => {
+  if (msg.type === "resize") {
+    figma.ui.resize(msg.width, 46);
+    return;
+  }
+  if (msg.type === "openFaq") {
+    figma.ui.resize(860, 610);
+    figma.ui.postMessage({ type: "showFaq" });
+    return;
+  }
+  if (msg.type !== "run") return;
+  switch (msg.command) {
+    case "alignAllSections": alignAllSections(); break;
+    case "expandSection":    expandSection();    break;
+    case "autosection":      await autoSectionAlign(); break;
+    case "duplicate":        duplicateFrame();          break;
+    case "wrap":             wrapOrAlignSectionClean(); break;
+    case "replace":          replaceWithInstance(); break;
+    case "slice":            wrapObjectsInSection(); break;
+    case "art":              artTextResize(); break;
+    case "findSimilar":      findSimilar(); break;
+    case "floatingTag":      createMediumTag(); break;
+    case "urgentTag":        createUrgentTag(); break;
+    case "doneTag":          createDoneTag(); break;
+  }
+};
 
 
 
@@ -78,7 +120,7 @@ function replaceWithInstance() {
 
   if (selection.length < 2) {
     figma.notify("Выдели объекты и ПОСЛЕДНИМ — эталонный");
-    figma.closePlugin();
+    tryClose();
     return;
   }
 
@@ -126,14 +168,14 @@ function replaceWithInstance() {
   });
 
   figma.notify(`Заменено объектов: ${replacedCount} 🚀`);
-  figma.closePlugin();
+  tryClose();
 }
 
 
 // ============================
 // 2️⃣ Auto Section Align (БЕЗ изменения порядка слоёв)
 // ============================
-function autoSectionAlign() {
+async function autoSectionAlign() {
   const GAP = 80;
   const PADDING = 100;
   const SECOND_ROW_OFFSET = 160;
@@ -174,17 +216,53 @@ function autoSectionAlign() {
     });
   }
 
-  function duplicateSecondRow(frames, parent) {
+  async function duplicateSecondRow(frames, parent) {
     if (frames.length === 0) return [];
 
     const maxHeight = Math.max(...frames.map(f => f.height));
     const clones = [];
+
+    function findBoundVariableId(node, depth) {
+      if (depth > 3) return null;
+      if (node.boundVariables) {
+        var keys = Object.keys(node.boundVariables);
+        if (keys.length > 0) {
+          var val = node.boundVariables[keys[0]];
+          return Array.isArray(val) ? val[0].id : val.id;
+        }
+      }
+      if (node.children) {
+        for (var i = 0; i < node.children.length; i++) {
+          var found = findBoundVariableId(node.children[i], depth + 1);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    var kissCollection = null;
+    var darkMode = null;
+
+    var varId = findBoundVariableId(frames[0], 0);
+    if (varId) {
+      var variable = await figma.variables.getVariableByIdAsync(varId);
+      if (variable) {
+        var collection = await figma.variables.getVariableCollectionByIdAsync(variable.variableCollectionId);
+        if (collection) {
+          kissCollection = collection;
+          darkMode = collection.modes.find(m => m.name === "Dark");
+        }
+      }
+    }
 
     frames.forEach(frame => {
       const clone = frame.clone();
       clone.x = frame.x;
       clone.y = frame.y + maxHeight + SECOND_ROW_OFFSET;
       parent.appendChild(clone);
+      if (kissCollection && darkMode) {
+        clone.setExplicitVariableModeForCollection(kissCollection, darkMode.modeId);
+      }
       clones.push(clone);
     });
 
@@ -236,17 +314,12 @@ function autoSectionAlign() {
       let secondRow = [];
 
       if (topMaxHeight > 960) {
-        secondRow = duplicateSecondRow(topRowFrames, section);
+        secondRow = await duplicateSecondRow(topRowFrames, section);
       }
 
       resizeSection(section);
 
-      if (secondRow.length > 0) {
-        figma.currentPage.selection = secondRow;
-      }
-
-      message = "Фреймы выровнены" +
-        (secondRow.length > 0 ? " и второй ряд дублирован ✅" : " ✅");
+      message = secondRow.length > 0 ? "Готово ✅" : "Фреймы выровнены ✅";
     }
 
   } else if (sel.length > 0) {
@@ -273,17 +346,12 @@ function autoSectionAlign() {
       let secondRow = [];
 
       if (topMaxHeight > 960) {
-        secondRow = duplicateSecondRow(framesToWrap, newSection);
+        secondRow = await duplicateSecondRow(framesToWrap, newSection);
       }
 
       resizeSection(newSection);
 
-      if (secondRow.length > 0) {
-        figma.currentPage.selection = secondRow;
-      }
-
-      message = "Секция создана и выровнена" +
-        (secondRow.length > 0 ? ", второй ряд дублирован ✅" : " ✅");
+      message = secondRow.length > 0 ? "Готово ✅" : "Секция создана и выровнена ✅";
     }
 
   } else {
@@ -291,7 +359,7 @@ function autoSectionAlign() {
   }
 
   figma.notify(message);
-  figma.closePlugin();
+  tryClose();
 }
 
 // ============================
@@ -306,7 +374,7 @@ function wrapObjectsInSection() {
 
   if (!selection || selection.length === 0) {
     figma.notify("Выделите хотя бы один объект");
-    figma.closePlugin();
+    tryClose();
     return;
   }
 
@@ -327,16 +395,28 @@ function wrapObjectsInSection() {
   figma.currentPage.appendChild(verticalWrapper);
 
   selection.forEach(node => {
+    const isRotated = Math.abs(node.rotation) > 0.01;
+
+    // Сохраняем данные ДО перемещения в wrapper
+    const bbox  = node.absoluteBoundingBox;
+    const absT  = node.absoluteTransform;
+    const nodeW = isRotated ? Math.round(bbox.width)  : node.width;
+    const nodeH = isRotated ? Math.round(bbox.height) : node.height;
+
+    // Смещение: transform origin относительно левого верхнего угла bounding box
+    const offsetX = isRotated ? absT[0][2] - bbox.x : 0;
+    const offsetY = isRotated ? absT[1][2] - bbox.y : 0;
+
     const wrapper = figma.createFrame();
     wrapper.name = `Wrapper for ${node.name}`;
     wrapper.fills = [];
     wrapper.clipsContent = false;
-
-    wrapper.resize(node.width + INNER_PADDING * 2, node.height + INNER_PADDING * 2);
-
+    wrapper.resize(nodeW + INNER_PADDING * 2, nodeH + INNER_PADDING * 2);
     wrapper.appendChild(node);
-    node.x = INNER_PADDING;
-    node.y = INNER_PADDING;
+
+    // Для повёрнутых: ставим origin так, чтобы visual bbox начался в (INNER_PADDING, INNER_PADDING)
+    node.x = INNER_PADDING + offsetX;
+    node.y = INNER_PADDING + offsetY;
 
     verticalWrapper.appendChild(wrapper);
   });
@@ -370,7 +450,7 @@ function wrapObjectsInSection() {
 
   figma.viewport.scrollAndZoomIntoView([section]);
   figma.notify("Нарезка завершена ✅");
-  figma.closePlugin();
+  tryClose();
 }
 
 // ============================
@@ -388,7 +468,7 @@ async function artTextResize() {
 
   if (selection.length === 0) {
     figma.notify("Сначала выдели картинку/арт, потом первый размер, потом второй");
-    figma.closePlugin();
+    tryClose();
     return;
   }
 
@@ -397,13 +477,13 @@ async function artTextResize() {
 
   if (objects.length === 0) {
     figma.notify("Нет объектов для расчёта");
-    figma.closePlugin();
+    tryClose();
     return;
   }
 
   if (texts.length !== objects.length * 2) {
     figma.notify("На каждый объект должно быть 2 текстовых слоя");
-    figma.closePlugin();
+    tryClose();
     return;
   }
 
@@ -439,7 +519,6 @@ async function artTextResize() {
     if (width <= 160 && height <= 160) {
       targetWidth = 160;
       targetHeight = (height / width) * 160;
-      scaleMultiplier = 4;
 
     } else {
       // Выбираем ближайший template
@@ -467,7 +546,7 @@ async function artTextResize() {
   }
 
   figma.notify("Все размеры проставлены ✅");
-  figma.closePlugin();
+  tryClose();
 }
 
 
@@ -482,7 +561,7 @@ function wrapOrAlignSectionClean() {
   const sel = figma.currentPage.selection;
   if (!sel.length) {
     figma.notify("Выделите секцию или фреймы");
-    figma.closePlugin();
+    tryClose();
     return;
   }
 
@@ -547,7 +626,7 @@ function wrapOrAlignSectionClean() {
     const framesToWrap = getFrames(sel);
     if (!framesToWrap.length) {
       figma.notify("Выделите хотя бы один фрейм");
-      figma.closePlugin();
+      tryClose();
       return;
     }
 
@@ -572,7 +651,7 @@ function wrapOrAlignSectionClean() {
     figma.notify(`Секция создана и выровнена ${orientation} ✅`);
   }
 
-  figma.closePlugin();
+  tryClose();
 }
 
 // ============================================
@@ -592,7 +671,7 @@ function alignAllSections() {
 
   if (sections.length === 0) {
     figma.notify("Нет доступных секций для выравнивания");
-    figma.closePlugin();
+    tryClose();
     return;
   }
 
@@ -704,7 +783,7 @@ function alignAllSections() {
   }
 
   figma.notify(`⚡ Готово! Перестроено секций: ${sections.length}`);
-  figma.closePlugin();
+  tryClose();
 }
 // ============================
 // Создать тег "Средний приоритет"
@@ -715,7 +794,7 @@ async function createMediumTag() {
 
     if (!selection || selection.length === 0) {
       figma.notify("⚠️ Выделите объект");
-      figma.closePlugin();
+      tryClose();
       return;
     }
 
@@ -735,7 +814,7 @@ async function createMediumTag() {
 
       if (!iconFrame || !textFrame) {
         figma.notify("⚠️ Неверная структура тега");
-        figma.closePlugin();
+        tryClose();
         return;
       }
 
@@ -759,7 +838,7 @@ async function createMediumTag() {
 
       figma.notify("✅ Приоритет обновлён");
 
-      figma.closePlugin();
+      tryClose();
       return;
     }
 
@@ -834,11 +913,11 @@ async function createMediumTag() {
 
     figma.notify("✅ Тег добавлен");
 
-    figma.closePlugin();
+    tryClose();
 
   } catch (err) {
     figma.notify("❌ Ошибка: " + (err.message || err));
-    figma.closePlugin();
+    tryClose();
   }
 }
 // ============================
@@ -850,7 +929,7 @@ async function createUrgentTag() {
 
     if (!selection || selection.length === 0) {
       figma.notify("⚠️ Выделите объект");
-      figma.closePlugin();
+      tryClose();
       return;
     }
 
@@ -870,7 +949,7 @@ async function createUrgentTag() {
 
       if (!iconFrame || !textFrame) {
         figma.notify("⚠️ Неверная структура тега");
-        figma.closePlugin();
+        tryClose();
         return;
       }
 
@@ -892,7 +971,7 @@ async function createUrgentTag() {
 
       figma.notify("✅ Приоритет обновлён");
 
-      figma.closePlugin();
+      tryClose();
       return;
     }
 
@@ -963,11 +1042,11 @@ async function createUrgentTag() {
 
     figma.notify("✅ Срочный тег добавлен");
 
-    figma.closePlugin();
+    tryClose();
 
   } catch (err) {
     figma.notify("❌ Ошибка: " + (err.message || err));
-    figma.closePlugin();
+    tryClose();
   }
 }
 // ============================
@@ -980,7 +1059,7 @@ async function createDoneTag() {
 
     if (!selection || selection.length === 0) {
       figma.notify("⚠️ Выделите объект");
-      figma.closePlugin();
+      tryClose();
       return;
     }
 
@@ -1005,7 +1084,7 @@ async function createDoneTag() {
 
       if (!iconFrame || !textFrame) {
         figma.notify("⚠️ Неверная структура тега");
-        figma.closePlugin();
+        tryClose();
         return;
       }
 
@@ -1036,7 +1115,7 @@ async function createDoneTag() {
 
       figma.notify("✅ Тег обновлён");
 
-      figma.closePlugin();
+      tryClose();
       return;
     }
 
@@ -1124,11 +1203,11 @@ async function createDoneTag() {
 
     figma.notify("✅ Тег добавлен");
 
-    figma.closePlugin();
+    tryClose();
 
   } catch (err) {
     figma.notify("❌ Ошибка: " + (err.message || err));
-    figma.closePlugin();
+    tryClose();
   }
 }
 
@@ -1141,7 +1220,7 @@ function findSimilar() {
 
   if (selection.length !== 1) {
     figma.notify("Выдели один объект");
-    figma.closePlugin();
+    tryClose();
     return;
   }
 
@@ -1163,20 +1242,85 @@ function findSimilar() {
 
     if (matches.length <= 1) {
       figma.notify("Похожих объектов не найдено");
-      figma.closePlugin();
+      tryClose();
       return;
     }
 
     figma.currentPage.selection = matches;
     figma.viewport.scrollAndZoomIntoView(matches);
     figma.notify(`Найдено ${matches.length} похожих объектов`);
-    figma.closePlugin();
+    tryClose();
   }, 50);
 }
 
 
 
 // ============================
+// Duplicate Frame — Дублировать фрейм в секции
+// ============================
+function duplicateFrame() {
+  const selection = figma.currentPage.selection;
+
+  if (selection.length !== 1) {
+    figma.notify("Выдели один фрейм внутри секции");
+    tryClose();
+    return;
+  }
+
+  const frame = selection[0];
+
+  if (frame.type !== "FRAME" && frame.type !== "COMPONENT" && frame.type !== "INSTANCE") {
+    figma.notify("Выдели фрейм внутри секции");
+    tryClose();
+    return;
+  }
+
+  const section = frame.parent;
+
+  if (!section || section.type !== "SECTION") {
+    figma.notify("Фрейм должен быть внутри секции");
+    tryClose();
+    return;
+  }
+
+  const GAP = 80;
+  const expandBy = frame.width + GAP;
+  const originalRight = section.x + section.width;
+
+  // Расширяем секцию
+  section.resizeWithoutConstraints(section.width + expandBy, section.height);
+
+  // Сдвигаем фреймы внутри секции, стоящие правее выделенного
+  section.children
+    .filter(c =>
+      (c.type === "FRAME" || c.type === "COMPONENT" || c.type === "INSTANCE") &&
+      c.id !== frame.id &&
+      c.x > frame.x
+    )
+    .forEach(c => { c.x += expandBy; });
+
+  // Клонируем фрейм и ставим сразу после оригинала
+  const clone = frame.clone();
+  clone.x = frame.x + frame.width + GAP;
+  clone.y = frame.y;
+  section.appendChild(clone);
+
+  // Сдвигаем секции того же ряда, которые стоят правее
+  figma.currentPage.children
+    .filter(s =>
+      s.type === "SECTION" &&
+      s.id !== section.id &&
+      s.x >= originalRight &&
+      s.y < section.y + section.height &&
+      s.y + s.height > section.y
+    )
+    .forEach(s => { s.x += expandBy; });
+
+  figma.currentPage.selection = [clone];
+  figma.notify("Готово ✅");
+  tryClose();
+}
+
 // Expand Section — Увеличить секцию
 // ============================
 function expandSection() {
@@ -1184,7 +1328,7 @@ function expandSection() {
 
   if (selection.length !== 1 || selection[0].type !== "SECTION") {
     figma.notify("Выдели одну секцию");
-    figma.closePlugin();
+    tryClose();
     return;
   }
 
@@ -1194,14 +1338,17 @@ function expandSection() {
   // Расширяем секцию на 620 px вправо
   section.resizeWithoutConstraints(section.width + 620, section.height);
 
-  // Сдвигаем все секции правее на 620 px
-  const allSections = figma.currentPage.findAll(node => node.type === "SECTION");
-  for (const s of allSections) {
-    if (s.id !== section.id && s.x >= originalRight) {
-      s.x += 620;
-    }
-  }
+  // Сдвигаем секции того же ряда, которые стоят правее
+  figma.currentPage.children
+    .filter(s =>
+      s.type === "SECTION" &&
+      s.id !== section.id &&
+      s.x >= originalRight &&
+      s.y < section.y + section.height &&
+      s.y + s.height > section.y
+    )
+    .forEach(s => { s.x += 620; });
 
   figma.notify("Секция расширена на 620 px");
-  figma.closePlugin();
+  tryClose();
 }

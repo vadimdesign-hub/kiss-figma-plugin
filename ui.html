@@ -180,12 +180,76 @@
 
     .divider {
       height: 1px;
-      background: #2a2a2a;
+      background: #282828;
       margin: 20px 0;
+    }
+
+    /* ── TOOLBAR MODE ── */
+    #toolbar {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      background: #ffffff;
+    }
+
+    .tool-btn {
+      width: 68px;
+      height: 38px;
+      border: none;
+      border-radius: 6px;
+      background: #f0f0f0;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      transition: background 0.12s, transform 0.1s;
+      flex-shrink: 0;
+      padding: 0 4px;
+    }
+
+    .tool-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .tool-btn:active {
+      transform: scale(0.92);
+      background: #d0d0d0;
+    }
+
+    .btn-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .btn-label {
+      font-size: 9px;
+      color: #666;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .tool-btn:hover .btn-label {
+      color: #111;
+    }
+
+    .arrow-btn {
+      width: 24px;
+      font-size: 18px;
+      color: #999;
+    }
+
+    .arrow-btn:hover {
+      color: #111;
     }
   </style>
 </head>
 <body>
+
+  <!-- TOOLBAR -->
+  <div id="toolbar"></div>
 
   <!-- HEADER -->
   <div class="header">
@@ -230,6 +294,12 @@
         how: "Выдели фреймы или готовую секцию и запусти команду."
       },
       {
+        icon: "➕",
+        label: "Дублировать",
+        description: `Дублирует выбранный фрейм прямо внутри секции: секция автоматически расширяется на ширину фрейма плюс 80 px, клон ставится сразу после оригинала, а все секции того же ряда, стоящие правее, сдвигаются так, чтобы расстояния между ними остались прежними. Удобно когда нужно быстро добавить ещё один экран в уже выстроенный ряд — не нужно вручную двигать соседние секции и пересчитывать отступы.`,
+        how: "Выдели один фрейм внутри секции и запусти команду."
+      },
+      {
         icon: "🔄",
         label: "Замена instance",
         description: `Представь, что у тебя на макете 20 старых карточек, которые нужно заменить на новую версию. Вместо того чтобы удалять каждую и ставить новую вручную — просто выдели все старые карточки, последним добавь в выделение новую, запусти функцию. Всё заменилось, позиции и размеры сохранились.`,
@@ -270,6 +340,12 @@
         label: "Задача выполнена",
         description: `Вешает зелёный тег «Задача выполнена» с иконкой ✅. Означает: правки приняты, можно двигаться дальше. Если уже есть тег — меняет его на выполненный.\n\nВсе три тега вместе образуют простую систему статусов прямо внутри Figma — без лишних инструментов и переключений между приложениями.`,
         how: "Выдели объект и запусти команду."
+      },
+      {
+        icon: "🎛️",
+        label: "Панель инструментов",
+        description: `Открывает компактную плавающую панель со всеми командами плагина в виде кнопок. Вместо того чтобы каждый раз лезть в меню Plugins — запускаешь UI один раз, и панель висит поверх канваса. Можно перетащить её в удобное место.\n\nПанель по умолчанию свёрнута: показывает первые 4 команды и стрелку «›». По нажатию стрелки раскрывается и показывает все доступные команды. Повторное нажатие сворачивает обратно.\n\nКаждая кнопка — это отдельная команда плагина. После нажатия панель остаётся открытой, чтобы можно было сразу запустить следующую команду.`,
+        how: "Запусти через Plugins → Kiss → 🎛️ UI. Панель откроется автоматически. Больше ничего выделять не нужно — команды запускай уже из панели."
       }
     ];
 
@@ -309,8 +385,79 @@
   </script>
 
   <script>
+    const tools = [
+      { icon: "⚡", label: "Секции",    command: "alignAllSections" },
+      { icon: "➡️", label: "Расширить", command: "expandSection"    },
+      { icon: "📐", label: "Тёмная",   command: "autosection"      },
+      { icon: "🗂️", label: "Обернуть", command: "wrap"             },
+      { icon: "➕", label: "Дублировать", command: "duplicate"     },
+      { icon: "🔄", label: "Замена",   command: "replace"          },
+      { icon: "✂️", label: "Нарезка",  command: "slice"            },
+      { icon: "🖼️", label: "В арт",    command: "art"              },
+      { icon: "🔍", label: "Похожие",  command: "findSimilar"      },
+      { icon: "🟠", label: "Средний",  command: "floatingTag"      },
+      { icon: "🔴", label: "Высокий",  command: "urgentTag"        },
+      { icon: "🟢", label: "Готово",   command: "doneTag"          },
+    ];
+
     window.onmessage = (event) => {
-      // обработка входящих сообщений если понадобится
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+
+      if (msg.type === "showFaq") {
+        document.getElementById("toolbar").style.display = "none";
+        document.querySelector(".header").style.display = "";
+        document.querySelector(".body").style.display = "";
+        document.body.style.background = "#1e1e1e";
+        return;
+      }
+
+      if (msg.type !== "toolbar") return;
+
+      document.getElementById("toolbar").style.display = "flex";
+      document.querySelector(".header").style.display = "none";
+      document.querySelector(".body").style.display = "none";
+      document.body.style.background = "#1e1e1e";
+
+      const VISIBLE = 4;
+      const BTN_W = 68, ARROW_W = 24, GAP = 4, PAD = 4;
+      const calcWidth = (count) => PAD * 2 + count * BTN_W + (count - 1) * GAP + GAP + ARROW_W;
+
+      const toolbar = document.getElementById("toolbar");
+      let expanded = false;
+
+      const btnEls = tools.map(t => {
+        const btn = document.createElement("button");
+        btn.className = "tool-btn";
+        btn.innerHTML = `<span class="btn-icon">${t.icon}</span><span class="btn-label">${t.label}</span>`;
+        btn.addEventListener("click", () => {
+          parent.postMessage({ pluginMessage: { type: "run", command: t.command } }, "*");
+        });
+        toolbar.appendChild(btn);
+        return btn;
+      });
+
+      const arrow = document.createElement("button");
+      arrow.className = "tool-btn arrow-btn";
+      arrow.textContent = "›";
+      toolbar.appendChild(arrow);
+
+      function applyState() {
+        btnEls.forEach((btn, i) => {
+          btn.style.display = (expanded || i < VISIBLE) ? "flex" : "none";
+        });
+        arrow.textContent = expanded ? "‹" : "›";
+        const visibleCount = expanded ? tools.length : VISIBLE;
+        const width = calcWidth(visibleCount);
+        parent.postMessage({ pluginMessage: { type: "resize", width } }, "*");
+      }
+
+      arrow.addEventListener("click", () => {
+        expanded = !expanded;
+        applyState();
+      });
+
+      applyState();
     };
   </script>
 </body>
