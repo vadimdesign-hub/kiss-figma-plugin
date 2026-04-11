@@ -11,16 +11,16 @@
       "command": "alignAllSections"
     },
     {
-      "name": "➡️ Увеличить секцию",
+      "name": "➡️ Увеличить секцию →",
       "command": "expandSection"
+    },
+    {
+      "name": "⬅️ Увеличить секцию ←",
+      "command": "expandSectionLeft"
     },
     {
       "name": "📐 Выровнять + темная",
       "command": "autosection"
-    },
-    {
-      "name": "➕ Дублировать",
-      "command": "duplicate"
     },
     {
       "name": "🗂️ Обернуть + выровнять",
@@ -57,12 +57,24 @@
       "command": "doneTag"
     },
     {
+      "name": "🔵 На ревью",
+      "command": "reviewTag"
+    },
+    {
+      "name": "🚀 Ready for Dev",
+      "command": "readyForDev"
+    },
+    {
       "name": "📖 FAQ",
       "command": "faq"
     },
     {
       "name": "🎛️ Панель инструментов",
       "command": "ui"
+    },
+    {
+      "name": "⚙️ Настройки",
+      "command": "settings"
     }
   ]
 }

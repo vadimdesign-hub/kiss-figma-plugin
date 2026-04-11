@@ -9,6 +9,100 @@
       padding: 0;
     }
 
+    :root {
+      --tb-bg: #ffffff;
+      --btn-bg: #f0f0f0;
+      --btn-hover: #e0e0e0;
+      --btn-active: #d0d0d0;
+      --label-color: #666;
+      --label-hover: #111;
+      --arrow-color: #999;
+      --arrow-hover: #111;
+      --stacked-label: #555;
+      --check-border: #d0d0d0;
+      --check-bg: #fff;
+      --check-label: #999;
+      --check-label-hover: #666;
+      --set-bg: #ffffff;
+      --set-title: #222;
+      --set-label: #888;
+      --set-card-bg: #fafafa;
+      --set-card-border: #e0e0e0;
+      --set-card-color: #555;
+      --set-card-hover: #f0f0f0;
+      --set-card-active-bg: #eef4ff;
+      --set-card-active-border: #a0c8f0;
+      --set-card-active-color: #1a6dd4;
+      --svg-stroke: #888;
+      --faq-bg: #ffffff;
+      --faq-header-bg: #ffffff;
+      --faq-header-border: #eee;
+      --faq-header-title: #111;
+      --faq-close-color: #999;
+      --faq-close-hover-bg: #f0f0f0;
+      --faq-sidebar-border: #eee;
+      --faq-scrollbar: #ddd;
+      --faq-tab-color: #555;
+      --faq-tab-hover-bg: #f5f5f5;
+      --faq-tab-hover-color: #222;
+      --faq-tab-active-bg: #f0f0f0;
+      --faq-tab-active-color: #111;
+      --faq-page-title: #111;
+      --faq-desc-color: #444;
+      --faq-section-label: #aaa;
+      --faq-howto-bg: #f7f7f7;
+      --faq-howto-border: #eee;
+      --faq-howto-color: #333;
+      --faq-divider: #eee;
+    }
+
+    :root.dark {
+      --tb-bg: #2a2a2a;
+      --btn-bg: #3a3a3a;
+      --btn-hover: #4a4a4a;
+      --btn-active: #555555;
+      --label-color: #aaa;
+      --label-hover: #eee;
+      --arrow-color: #888;
+      --arrow-hover: #eee;
+      --stacked-label: #aaa;
+      --check-border: #555;
+      --check-bg: #333;
+      --check-label: #888;
+      --check-label-hover: #bbb;
+      --set-bg: #2a2a2a;
+      --set-title: #e0e0e0;
+      --set-label: #999;
+      --set-card-bg: #333;
+      --set-card-border: #555;
+      --set-card-color: #bbb;
+      --set-card-hover: #3e3e3e;
+      --set-card-active-bg: #1e2d42;
+      --set-card-active-border: #4a7ab5;
+      --set-card-active-color: #7ab8ff;
+      --svg-stroke: #bbb;
+      --faq-bg: #1e1e1e;
+      --faq-header-bg: #1e1e1e;
+      --faq-header-border: #2e2e2e;
+      --faq-header-title: #ffffff;
+      --faq-close-color: #888;
+      --faq-close-hover-bg: #2e2e2e;
+      --faq-sidebar-border: #2e2e2e;
+      --faq-scrollbar: #3a3a3a;
+      --faq-tab-color: #aaa;
+      --faq-tab-hover-bg: #2a2a2a;
+      --faq-tab-hover-color: #e0e0e0;
+      --faq-tab-active-bg: #2d2d2d;
+      --faq-tab-active-color: #ffffff;
+      --faq-page-title: #ffffff;
+      --faq-desc-color: #b0b0b0;
+      --faq-section-label: #555;
+      --faq-howto-bg: #252525;
+      --faq-howto-border: #2e2e2e;
+      --faq-howto-color: #c0c0c0;
+      --faq-divider: #282828;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
       background: #1e1e1e;
@@ -26,14 +120,15 @@
       justify-content: center;
       position: relative;
       padding: 16px 20px;
-      border-bottom: 1px solid #2e2e2e;
+      border-bottom: 1px solid var(--faq-header-border);
+      background: var(--faq-header-bg);
       flex-shrink: 0;
     }
 
     .header-title {
       font-size: 13px;
       font-weight: 600;
-      color: #ffffff;
+      color: var(--faq-header-title);
       letter-spacing: 0.01em;
     }
 
@@ -51,13 +146,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #888;
+      color: var(--faq-close-color);
       transition: background 0.15s, color 0.15s;
     }
 
     .close-btn:hover {
-      background: #2e2e2e;
-      color: #ffffff;
+      background: var(--faq-close-hover-bg);
+      color: var(--faq-header-title);
     }
 
     .close-btn svg {
@@ -76,14 +171,14 @@
     .sidebar {
       width: 220px;
       flex-shrink: 0;
-      border-right: 1px solid #2e2e2e;
+      border-right: 1px solid var(--faq-sidebar-border);
       overflow-y: auto;
       padding: 8px 0;
     }
 
     .sidebar::-webkit-scrollbar { width: 4px; }
     .sidebar::-webkit-scrollbar-track { background: transparent; }
-    .sidebar::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 2px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--faq-scrollbar); border-radius: 2px; }
 
     .tab {
       display: flex;
@@ -95,18 +190,18 @@
       margin: 1px 6px;
       transition: background 0.12s;
       font-size: 12px;
-      color: #aaa;
+      color: var(--faq-tab-color);
       line-height: 1.3;
     }
 
     .tab:hover {
-      background: #2a2a2a;
-      color: #e0e0e0;
+      background: var(--faq-tab-hover-bg);
+      color: var(--faq-tab-hover-color);
     }
 
     .tab.active {
-      background: #2d2d2d;
-      color: #ffffff;
+      background: var(--faq-tab-active-bg);
+      color: var(--faq-tab-active-color);
     }
 
     .tab-icon {
@@ -129,7 +224,7 @@
 
     .content::-webkit-scrollbar { width: 4px; }
     .content::-webkit-scrollbar-track { background: transparent; }
-    .content::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 2px; }
+    .content::-webkit-scrollbar-thumb { background: var(--faq-scrollbar); border-radius: 2px; }
 
     .page {
       display: none;
@@ -144,17 +239,101 @@
       margin-bottom: 12px;
     }
 
+    .btn-preview {
+      display: inline-flex;
+      align-items: flex-start;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+    .btn-preview-item {
+      background: var(--btn-bg);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 5px 0 5px 6px;
+      height: 50px;
+      min-width: 68px;
+      position: relative;
+      box-sizing: border-box;
+    }
+    .btn-preview-item.icon-only {
+      width: 42px;
+      min-width: 42px;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .btn-preview-item .bp-icon {
+      font-size: 18px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-preview-item .bp-label {
+      font-size: 10px;
+      color: var(--label-color);
+    }
+    .btn-preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      width: 88px;
+      height: 50px;
+    }
+    .bp-grid-btn {
+      width: calc(50% - 1px);
+      height: calc(50% - 1px);
+      background: var(--btn-bg);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bp-check {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 12px;
+      height: 12px;
+      border: 1.5px solid var(--check-border);
+      border-radius: 3px;
+      background: var(--check-bg);
+    }
+    .bp-check-row {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      right: 4px;
+    }
+    .bp-check-row.row-top { top: 5px; }
+    .bp-check-row.row-bottom { top: 22px; }
+    .bp-check-row span {
+      font-size: 8px;
+      color: var(--check-label);
+    }
+    .bp-check-sm {
+      width: 12px;
+      height: 12px;
+      border: 1.5px solid var(--check-border);
+      border-radius: 3px;
+      background: var(--check-bg);
+      flex-shrink: 0;
+    }
+
     .page-title {
       font-size: 18px;
       font-weight: 700;
-      color: #ffffff;
+      color: var(--faq-page-title);
       margin-bottom: 16px;
     }
 
     .description {
       font-size: 13px;
       line-height: 1.7;
-      color: #b0b0b0;
+      color: var(--faq-desc-color);
       margin-bottom: 20px;
     }
 
@@ -163,24 +342,24 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      color: #555;
+      color: var(--faq-section-label);
       margin-bottom: 8px;
       margin-top: 20px;
     }
 
     .how-to {
-      background: #252525;
-      border: 1px solid #2e2e2e;
+      background: var(--faq-howto-bg);
+      border: 1px solid var(--faq-howto-border);
       border-radius: 8px;
       padding: 12px 16px;
       font-size: 12.5px;
       line-height: 1.6;
-      color: #c0c0c0;
+      color: var(--faq-howto-color);
     }
 
     .divider {
       height: 1px;
-      background: #282828;
+      background: var(--faq-divider);
       margin: 20px 0;
     }
 
@@ -190,59 +369,271 @@
       align-items: center;
       gap: 4px;
       padding: 4px;
-      background: #ffffff;
+      background: var(--tb-bg);
     }
 
     .tool-btn {
       width: 68px;
-      height: 38px;
+      height: 50px;
       border: none;
       border-radius: 6px;
-      background: #f0f0f0;
+      background: var(--btn-bg);
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
+      align-items: flex-start;
+      justify-content: space-between;
       transition: background 0.12s, transform 0.1s;
       flex-shrink: 0;
-      padding: 0 4px;
+      padding: 5px 0 5px 6px;
     }
 
     .tool-btn:hover {
-      background: #e0e0e0;
+      background: var(--btn-hover);
     }
 
     .tool-btn:active {
       transform: scale(0.92);
-      background: #d0d0d0;
+      background: var(--btn-active);
     }
 
     .btn-icon {
-      font-size: 16px;
+      font-size: 18px;
       line-height: 1;
+      display: inline-flex;
+      align-items: center;
     }
 
     .btn-label {
-      font-size: 9px;
-      color: #666;
-      text-align: center;
+      font-size: 10px;
+      color: var(--label-color);
+      text-align: left;
       white-space: nowrap;
     }
 
     .tool-btn:hover .btn-label {
-      color: #111;
+      color: var(--label-hover);
     }
 
     .arrow-btn {
       width: 24px;
-      font-size: 18px;
-      color: #999;
+      font-size: 20px;
+      color: var(--arrow-color);
+      align-items: center;
+      justify-content: center;
+      padding: 0;
     }
 
     .arrow-btn:hover {
-      color: #111;
+      color: var(--arrow-hover);
+    }
+
+    .tool-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .tool-group {
+      height: 50px;
+    }
+
+    .tool-btn-stacked {
+      flex: 1;
+      border: none;
+      border-radius: 5px;
+      background: var(--btn-bg);
+      cursor: pointer;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 5px;
+      padding: 0 8px;
+      transition: background 0.12s;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .tool-btn-stacked:hover { background: var(--btn-hover); }
+    .tool-btn-stacked:active { background: var(--btn-active); }
+
+    .tool-btn-stacked .btn-icon { font-size: 15px; line-height: 1; }
+    .tool-btn-stacked .btn-label { font-size: 11px; color: var(--stacked-label); }
+    .tool-btn-stacked:hover .btn-label { color: var(--label-hover); }
+
+    .tool-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      width: 88px;
+      height: 50px;
+      flex-shrink: 0;
+    }
+    .tool-grid-btn {
+      width: calc(50% - 1px);
+      height: calc(50% - 1px);
+      border: none;
+      border-radius: 4px;
+      background: var(--btn-bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: background 0.12s;
+      font-size: 12px;
+      line-height: 1;
+    }
+    .tool-grid-btn:hover { background: var(--btn-hover); }
+    .tool-grid-btn:active { background: var(--btn-active); }
+
+    .tool-btn { position: relative; user-select: none; }
+    .tool-btn.dragging { opacity: 0.35; }
+    .drop-indicator {
+      width: 2px;
+      min-width: 2px;
+      height: 38px;
+      background: #1f8fff;
+      border-radius: 2px;
+      flex-shrink: 0;
+      pointer-events: none;
+      align-self: center;
+      display: none;
+    }
+    .btn-kbd-check {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      accent-color: #1f8fff;
+      margin: 0;
+      z-index: 1;
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1.5px solid var(--check-border);
+      border-radius: 3px;
+      background: var(--check-bg);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn-check-row {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      right: 4px;
+      z-index: 1;
+    }
+    .btn-check-row.row-top { top: 5px; }
+    .btn-check-row.row-bottom { top: 22px; }
+    .btn-check-row label {
+      font-size: 9px;
+      color: var(--check-label);
+      cursor: pointer;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .btn-check-row:hover label { color: var(--check-label-hover); }
+    .btn-check-sm {
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      margin: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1.5px solid var(--check-border);
+      border-radius: 3px;
+      background: var(--check-bg);
+      transition: border-color 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-check-sm:checked {
+      background: #deeeff;
+      border-color: #a0c8f0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 5l2.5 2.5L8 3' stroke='%231f8fff' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-size: 10px;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .btn-kbd-check:checked {
+      background: #deeeff;
+      border-color: #a0c8f0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 5l2.5 2.5L8 3' stroke='%231f8fff' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-size: 10px;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    /* ── SETTINGS PANEL ── */
+    #settings {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      padding: 16px 24px 12px;
+      background: var(--set-bg);
+      width: 100%;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+    .settings-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--set-title);
+    }
+    .settings-section {}
+    .settings-label {
+      font-size: 12px;
+      color: var(--set-label);
+      margin-bottom: 10px;
+    }
+    .settings-options {
+      display: flex;
+      gap: 10px;
+    }
+    .settings-card {
+      flex: 1 1 0;
+      min-width: 0;
+      border: 2px solid var(--set-card-border);
+      border-radius: 10px;
+      background: var(--set-card-bg);
+      cursor: pointer;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+      font-size: 12px;
+      color: var(--set-card-color);
+    }
+    .settings-card:hover { background: var(--set-card-hover); }
+    .settings-card.active {
+      background: var(--set-card-active-bg);
+      border-color: var(--set-card-active-border);
+      color: var(--set-card-active-color);
+    }
+    .settings-save {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #1a6dd4;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .settings-save:hover { background: #1558b0; }
+
+    .settings-card-preview {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
     }
   </style>
 </head>
@@ -250,6 +641,43 @@
 
   <!-- TOOLBAR -->
   <div id="toolbar"></div>
+  <!-- SETTINGS -->
+  <div id="settings">
+    <div class="settings-title">Настройки</div>
+    <div class="settings-section">
+      <div class="settings-label">Стиль иконок</div>
+      <div class="settings-options">
+        <button class="settings-card active" id="optSvg">
+          <div class="settings-card-preview" id="previewSvg"></div>
+          <span>SVG</span>
+        </button>
+        <button class="settings-card" id="optEmoji">
+          <div class="settings-card-preview" id="previewEmoji"></div>
+          <span>Emoji</span>
+        </button>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-label">Тема</div>
+      <div class="settings-options">
+        <button class="settings-card active" id="optLight">
+          <div class="settings-card-preview" style="display:flex;gap:4px;align-items:center">
+            <div style="width:28px;height:18px;border-radius:4px;background:#f0f0f0;border:1px solid #ddd"></div>
+            <div style="width:28px;height:18px;border-radius:4px;background:#e0e0e0;border:1px solid #ddd"></div>
+          </div>
+          <span>Светлая</span>
+        </button>
+        <button class="settings-card" id="optDark">
+          <div class="settings-card-preview" style="display:flex;gap:4px;align-items:center">
+            <div style="width:28px;height:18px;border-radius:4px;background:#3a3a3a;border:1px solid #555"></div>
+            <div style="width:28px;height:18px;border-radius:4px;background:#4a4a4a;border:1px solid #555"></div>
+          </div>
+          <span>Тёмная</span>
+        </button>
+      </div>
+    </div>
+    <button class="settings-save" id="settingsSave" style="display:none">Сохранить</button>
+  </div>
 
   <!-- HEADER -->
   <div class="header">
@@ -268,84 +696,132 @@
   </div>
 
   <script>
+    const SVG = (d, extra='') => `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--svg-stroke)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ${extra}>${d}</svg>`;
+    const IC = {
+      grid:     SVG('<rect x="2" y="2" width="5.5" height="5.5" rx="1"/><rect x="10.5" y="2" width="5.5" height="5.5" rx="1"/><rect x="2" y="10.5" width="5.5" height="5.5" rx="1"/><rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1"/>'),
+      chevronL: SVG('<path d="M10 4L5 9l5 5"/><line x1="5" y1="9" x2="14" y2="9"/>'),
+      chevronR: SVG('<path d="M8 4l5 5-5 5"/><line x1="13" y1="9" x2="4" y2="9"/>'),
+      contrast: SVG('<circle cx="9" cy="9" r="6"/><path d="M9 3a6 6 0 000 12z" fill="#888"/>'),
+      frame:    SVG('<path d="M2 6V3h3"/><path d="M12 3h4v3"/><path d="M16 12v3h-4"/><path d="M6 15H2v-3"/>'),
+      code:     SVG('<path d="M6 4L2 9l4 5"/><path d="M12 4l4 5-4 5"/>'),
+      swap:     SVG('<path d="M4 6h10"/><path d="M11 3l3 3-3 3"/><path d="M14 12H4"/><path d="M7 9l-3 3 3 3"/>'),
+      scissors: SVG('<circle cx="5" cy="5" r="2.5"/><circle cx="5" cy="13" r="2.5"/><path d="M7.2 6.8L15 14"/><path d="M7.2 11.2L15 4"/>'),
+      image:    SVG('<rect x="2" y="3" width="14" height="12" rx="1.5"/><circle cx="6.5" cy="7.5" r="1.5"/><path d="M16 12l-4-4-6 6"/>'),
+      search:   SVG('<circle cx="7.5" cy="7.5" r="5"/><path d="M11.5 11.5L16 16"/>'),
+      sliders:  SVG('<line x1="4" y1="5" x2="4" y2="15"/><line x1="9" y1="3" x2="9" y2="13"/><line x1="14" y1="6" x2="14" y2="16"/><circle cx="4" cy="5" r="2" fill="#888"/><circle cx="9" cy="13" r="2" fill="#888"/><circle cx="14" cy="6" r="2" fill="#888"/>'),
+      gear:     SVG('<circle cx="9" cy="9" r="3"/><path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.4 1.4M12.9 12.9l1.4 1.4M3.7 14.3l1.4-1.4M12.9 5.1l1.4-1.4"/>'),
+    };
     const menu = [
       {
-        icon: "⚡",
+        icon: IC.grid, emojiIcon: "⚡",
         label: "Выровнять все секции",
+        getPreview(s) { const i = s === "emoji" ? "⚡" : IC.grid; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Секции</span></div></div>`; },
         description: `Одна кнопка — и все секции на странице выстраиваются в аккуратную сетку слева направо, сверху вниз. Секция с компонентами автоматически встаёт первой в своём ряду. Полезно когда после долгой работы страница превратилась в хаос — запускаешь и всё встаёт на своё место.`,
         how: "Ничего не нужно выделять — просто запусти команду на нужной странице."
       },
       {
-        icon: "➡️",
-        label: "Увеличить секцию",
-        description: `Увеличивает ширину выбранной секции на 540 px вправо, не смещая её левую границу. Все секции, расположенные правее, автоматически сдвигаются на 540 px, чтобы сохранить структуру макета. Удобно когда нужно добавить новые экраны в уже выстроенный ряд — не нужно вручную двигать всё соседнее.`,
-        how: "Выдели одну секцию и запусти команду."
+        icon: IC.chevronR, emojiIcon: "➡️",
+        label: "Расширить вправо / Дублировать вправо",
+        getPreview(s) { const l = s === "emoji" ? "⬅️" : IC.chevronL, r = s === "emoji" ? "➡️" : IC.chevronR; return `<div class="btn-preview"><div class="btn-preview-item icon-only"><span class="bp-icon">${l}</span></div><div class="btn-preview-item icon-only"><span class="bp-icon">${r}</span></div></div>`; },
+        description: `Работает по-разному в зависимости от того, что выделено.\n\nЕсли выделена <b>секция</b> — расширяет её на 620 px вправо, все правые секции сдвигаются.\n\nЕсли выделен <b>фрейм внутри секции</b> — дублирует его вправо: секция расширяется на ширину фрейма + 80 px, клон ставится сразу после оригинала, все секции того же ряда сдвигаются правее.`,
+        how: "Выдели секцию или фрейм внутри секции и нажми ➡️."
       },
       {
-        icon: "📐",
+        icon: IC.chevronL, emojiIcon: "⬅️",
+        label: "Расширить влево / Дублировать влево",
+        getPreview(s) { const l = s === "emoji" ? "⬅️" : IC.chevronL, r = s === "emoji" ? "➡️" : IC.chevronR; return `<div class="btn-preview"><div class="btn-preview-item icon-only"><span class="bp-icon">${l}</span></div><div class="btn-preview-item icon-only"><span class="bp-icon">${r}</span></div></div>`; },
+        description: `Работает по-разному в зависимости от того, что выделено.\n\nЕсли выделена <b>секция</b> — расширяет её на 620 px влево: контент внутри сдвигается вправо, правые соседние секции тоже уходят правее.\n\nЕсли выделен <b>фрейм внутри секции</b> — дублирует его влево: клон встаёт на место оригинала, оригинал и все фреймы правее сдвигаются вправо, правые секции тоже сдвигаются.`,
+        how: "Выдели секцию или фрейм внутри секции и нажми ⬅️."
+      },
+      {
+        icon: IC.contrast, emojiIcon: "📐",
         label: "Выровнять + тёмная",
-        description: `Выравнивает экраны внутри секции с одинаковыми отступами. Если у тебя нет секции — создаст её сама. Если экраны высокие (больше 960px) — автоматически создаст второй ряд под ними для тёмной версии дизайна. Больше не нужно вручную выстраивать каждый экран и считать отступы.`,
-        how: "Выдели секцию или набор фреймов и запусти команду."
+        getPreview(s) { const i = s === "emoji" ? "📐" : IC.contrast; return `<div class="btn-preview"><div class="btn-preview-item" style="width:80px"><span class="bp-icon">${i}</span><span class="bp-label">Тёмная</span><div class="bp-check" style="top:4px;right:4px"></div><span style="position:absolute;top:6px;right:20px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span></div></div>`; },
+        description: `Выравнивает экраны внутри секции с одинаковыми отступами. Если у тебя нет секции — создаст её сама. Если экраны высокие (больше 960px) — автоматически создаст второй ряд под ними для тёмной версии дизайна. Больше не нужно вручную выстраивать каждый экран и считать отступы.\n\nНа кнопке в панели инструментов есть чекбокс с иконкой клавиатуры — если его включить, перед выравниванием под каждым экраном автоматически добавится компонент клавиатуры (переменная «Keyboard»).`,
+        how: "Выдели секцию или набор фреймов и запусти команду. Для режима с клавиатурой — отметь чекбокс перед запуском."
       },
       {
-        icon: "🗂️",
+        icon: IC.frame, emojiIcon: "🗂️",
         label: "Обернуть + выровнять",
+        getPreview(s) { const i = s === "emoji" ? "🗂️" : IC.frame; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Обернуть</span></div></div>`; },
         description: `Выдели набор экранов — функция сама создаст секцию «Экраны», сложит их туда и выровняет. Уже есть секция с беспорядком? Выдели её — всё выровняется на месте. Ориентацию (в ряд или в столбик) определяет сама, исходя из того как расположены экраны.`,
         how: "Выдели фреймы или готовую секцию и запусти команду."
       },
       {
-        icon: "➕",
-        label: "Дублировать",
-        description: `Дублирует выбранный фрейм прямо внутри секции: секция автоматически расширяется на ширину фрейма плюс 80 px, клон ставится сразу после оригинала, а все секции того же ряда, стоящие правее, сдвигаются так, чтобы расстояния между ними остались прежними. Удобно когда нужно быстро добавить ещё один экран в уже выстроенный ряд — не нужно вручную двигать соседние секции и пересчитывать отступы.`,
-        how: "Выдели один фрейм внутри секции и запусти команду."
-      },
-      {
-        icon: "🔄",
+        icon: IC.swap, emojiIcon: "🔄",
         label: "Замена instance",
+        getPreview(s) { const i = s === "emoji" ? "🔄" : IC.swap; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Замена</span></div></div>`; },
         description: `Представь, что у тебя на макете 20 старых карточек, которые нужно заменить на новую версию. Вместо того чтобы удалять каждую и ставить новую вручную — просто выдели все старые карточки, последним добавь в выделение новую, запусти функцию. Всё заменилось, позиции и размеры сохранились.`,
         how: "Выдели объекты которые нужно заменить, последним в выделении добавь тот объект, на который хочешь заменить — и запусти команду. Работает с любыми объектами."
       },
       {
-        icon: "✂️",
-        label: "Нарезка 1px",
-        description: `Подготавливает элементы к передаче в разработку. Каждый выбранный объект аккуратно упаковывается в свой контейнер с отступом 1px, все контейнеры складываются в одну секцию «Нарезка». Разработчик получает чистые, изолированные ассеты без лишних полей.`,
-        how: "Выдели все объекты которые нужно нарезать и запусти команду."
+        icon: IC.scissors, emojiIcon: "✂️",
+        label: "Нарезка",
+        getPreview(s) { const i = s === "emoji" ? "✂️" : IC.scissors; return `<div class="btn-preview"><div class="btn-preview-item" style="width:120px;padding-right:55px"><span class="bp-icon">${i}</span><span class="bp-label">Нарезка</span><div class="bp-check-row row-top"><span>2.67</span><div class="bp-check-sm"></div></div><div class="bp-check-row row-bottom"><span>Продукт</span><div class="bp-check-sm"></div></div></div></div>`; },
+        description: `Универсальный инструмент подготовки ассетов. Работает в трёх режимах в зависимости от чекбоксов на кнопке:\n\n<b>Без чекбоксов (по умолчанию)</b> — нарезка 1px. Каждый выделенный объект оборачивается во фрейм с отступом 1px, все результаты складываются в секцию «Нарезка».\n\n<b>Чекбокс «2.67»</b> — масштабирование. Каждый выделенный объект увеличивается в 2.67 раз, размеры округляются до чётных чисел. Результаты помещаются в секцию «Нарезка / Сервер».\n\n<b>Чекбокс «Продукт»</b> — серверные иконки. Каждый объект оборачивается во фрейм с отступом 1px, создаются три масштабированные копии — <b>80×80</b>, <b>120×120</b> и <b>240×240</b>. Оригинал удаляется, результаты складываются в секцию «Нарезка / Продукт».\n\nЧекбоксы взаимоисключающие — можно выбрать только один. После выполнения команды чекбокс автоматически сбрасывается.`,
+        how: "Выдели объекты, при необходимости отметь нужный чекбокс на кнопке, и нажми кнопку «Нарезка»."
       },
       {
-        icon: "🖼️",
+        icon: IC.image, emojiIcon: "🖼️",
         label: "Размеры в арт",
+        getPreview(s) { const i = s === "emoji" ? "🖼️" : IC.image; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">В арт</span></div></div>`; },
         description: `Автоматически проставляет правильные размеры артов внутри выбранных объектов. Первый текстовый слой показывает реальный размер (W×H px), второй — итоговый размер арта в нужном масштабе: объекты до 160px — в 4x, остальные — в 3x с округлением до шаблона 160 / 320 / 540. Не нужно считать вручную и рисковать ошибиться.`,
         how: "Сначала выдели картинку/арт, потом первый размер, потом второй — и запусти команду.\n\nМожно выделять несколько картинок сразу — для этого просто выделяй циклично: картинка / текст / текст, картинка / текст / текст и т.д."
       },
       {
-        icon: "🔍",
+        icon: IC.search, emojiIcon: "🔍",
         label: "Найти похожие",
+        getPreview(s) { const i = s === "emoji" ? "🔍" : IC.search; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Похожие</span></div></div>`; },
         description: `Выдели любой объект на странице — фрейм, компонент, прямоугольник — и запусти команду. Плагин найдёт по всей текущей странице все объекты с точно таким же именем и точно такими же размерами (ширина и высота). Все найденные объекты выделятся разом вместе с исходным, и вьюпорт подстроится, чтобы их было видно. Удобно когда нужно быстро найти все однотипные элементы — например, все карточки одного размера или все иконки с одним именем.`,
         how: "Выдели один объект и запусти команду. Если похожих не найдено — появится уведомление."
       },
       {
-        icon: "🟠",
+        icon: '<svg width="18" height="18"><circle cx="9" cy="9" r="7" fill="#F59E0B"/></svg>', emojiIcon: "🟠",
         label: "Средний приоритет",
+        getPreview(s) { const e = s === "emoji"; const g = (c,em) => e ? em : `<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="${c}"/></svg>`; return `<div class="btn-preview"><div class="btn-preview-grid"><div class="bp-grid-btn">${g("#F59E0B","🟠")}</div><div class="bp-grid-btn">${g("#EF4444","🔴")}</div><div class="bp-grid-btn">${g("#22C55E","🟢")}</div><div class="bp-grid-btn">${g("#3B82F6","🔵")}</div></div></div>`; },
         description: `Вешает на выбранный объект оранжевый тег «Средний приоритет» с иконкой ⚠️. Означает: здесь есть что доделать, но не срочно. Если на объекте уже висит другой тег — он перекрасится в оранжевый, пересоздавать не нужно. Вся команда видит статус прямо в Figma.`,
         how: "Выдели объект и запусти команду."
       },
       {
-        icon: "🔴",
+        icon: '<svg width="18" height="18"><circle cx="9" cy="9" r="7" fill="#EF4444"/></svg>', emojiIcon: "🔴",
         label: "Высокий приоритет",
+        getPreview(s) { const e = s === "emoji"; const g = (c,em) => e ? em : `<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="${c}"/></svg>`; return `<div class="btn-preview"><div class="btn-preview-grid"><div class="bp-grid-btn">${g("#F59E0B","🟠")}</div><div class="bp-grid-btn">${g("#EF4444","🔴")}</div><div class="bp-grid-btn">${g("#22C55E","🟢")}</div><div class="bp-grid-btn">${g("#3B82F6","🔵")}</div></div></div>`; },
         description: `Вешает красный тег «Высокий приоритет» с иконкой ⏰. Означает: это нужно исправить как можно скорее, это блокер. Хорошо заметен на макете — сложно пропустить на ревью или при передаче в разработку. Если уже есть тег — меняет его на срочный.`,
         how: "Выдели объект и запусти команду."
       },
       {
-        icon: "🟢",
+        icon: '<svg width="18" height="18"><circle cx="9" cy="9" r="7" fill="#22C55E"/></svg>', emojiIcon: "🟢",
         label: "Задача выполнена",
+        getPreview(s) { const e = s === "emoji"; const g = (c,em) => e ? em : `<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="${c}"/></svg>`; return `<div class="btn-preview"><div class="btn-preview-grid"><div class="bp-grid-btn">${g("#F59E0B","🟠")}</div><div class="bp-grid-btn">${g("#EF4444","🔴")}</div><div class="bp-grid-btn">${g("#22C55E","🟢")}</div><div class="bp-grid-btn">${g("#3B82F6","🔵")}</div></div></div>`; },
         description: `Вешает зелёный тег «Задача выполнена» с иконкой ✅. Означает: правки приняты, можно двигаться дальше. Если уже есть тег — меняет его на выполненный.\n\nВсе три тега вместе образуют простую систему статусов прямо внутри Figma — без лишних инструментов и переключений между приложениями.`,
         how: "Выдели объект и запусти команду."
       },
       {
-        icon: "🎛️",
+        icon: '<svg width="18" height="18"><circle cx="9" cy="9" r="7" fill="#3B82F6"/></svg>', emojiIcon: "🔵",
+        label: "На ревью",
+        getPreview(s) { const e = s === "emoji"; const g = (c,em) => e ? em : `<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="${c}"/></svg>`; return `<div class="btn-preview"><div class="btn-preview-grid"><div class="bp-grid-btn">${g("#F59E0B","🟠")}</div><div class="bp-grid-btn">${g("#EF4444","🔴")}</div><div class="bp-grid-btn">${g("#22C55E","🟢")}</div><div class="bp-grid-btn">${g("#3B82F6","🔵")}</div></div></div>`; },
+        description: `Вешает синий тег «На ревью» с иконкой ⚙️. Означает: экран готов и ждёт проверки. Если уже есть тег другого цвета — меняет его на синий. Удобно обозначать экраны, которые отправлены на согласование, не выходя из Figma.`,
+        how: "Выдели объект и запусти команду."
+      },
+      {
+        icon: IC.code, emojiIcon: "🚀",
+        label: "Ready for Dev",
+        getPreview(s) { const i = s === "emoji" ? "🚀" : IC.code; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Dev</span></div></div>`; },
+        description: `Помечает секции официальным статусом Figma «Ready for Dev» — разработчики видят его в режиме Dev Mode.\n\nЕсли выделена одна секция — ставит статус только ей.\n\nЕсли ничего не выделено — переключает всю страницу: все секции уже помечены → снимает статус с каждой; хотя бы одна не помечена → ставит всем.`,
+        how: "Выдели одну секцию — или ничего не выделяй для переключения всей страницы."
+      },
+      {
+        icon: IC.sliders, emojiIcon: "🎛️",
         label: "Панель инструментов",
-        description: `Открывает компактную плавающую панель со всеми командами плагина в виде кнопок. Вместо того чтобы каждый раз лезть в меню Plugins — запускаешь UI один раз, и панель висит поверх канваса. Можно перетащить её в удобное место.\n\nПанель по умолчанию свёрнута: показывает первые 4 команды и стрелку «›». По нажатию стрелки раскрывается и показывает все доступные команды. Повторное нажатие сворачивает обратно.\n\nКаждая кнопка — это отдельная команда плагина. После нажатия панель остаётся открытой, чтобы можно было сразу запустить следующую команду.`,
-        how: "Запусти через Plugins → Kiss → 🎛️ UI. Панель откроется автоматически. Больше ничего выделять не нужно — команды запускай уже из панели."
+        getPreview(s) { const e = s === "emoji"; const a = e ? "⚡" : IC.grid, b = e ? "⬅️" : IC.chevronL, c = e ? "➡️" : IC.chevronR, d = e ? "📐" : IC.contrast; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${a}</span><span class="bp-label">Секции</span></div><div class="btn-preview-item icon-only"><span class="bp-icon">${b}</span></div><div class="btn-preview-item icon-only"><span class="bp-icon">${c}</span></div><div class="btn-preview-item"><span class="bp-icon">${d}</span><span class="bp-label">Тёмная</span></div><div style="display:flex;align-items:center;justify-content:center;width:24px;height:50px;color:#777;font-size:18px">›</div></div>`; },
+        description: `Открывает компактную плавающую панель со всеми командами плагина в виде кнопок. Вместо того чтобы каждый раз лезть в меню Plugins — запускаешь UI один раз, и панель висит поверх канваса.\n\nПанель по умолчанию свёрнута: показывает первые 5 команд и стрелку «›». По нажатию стрелки раскрывается и показывает все доступные команды. Повторное нажатие сворачивает обратно.\n\nКнопки можно перетаскивать для изменения порядка — порядок сохраняется между сессиями.\n\nКаждая кнопка — это отдельная команда плагина. После нажатия панель остаётся открытой, чтобы можно было сразу запустить следующую команду.`,
+        how: "Запусти через Plugins → Kiss → 🎛️ Панель инструментов. Панель откроется автоматически. Команды запускай уже из панели."
+      },
+      {
+        icon: IC.gear, emojiIcon: "⚙️",
+        label: "Настройки",
+        description: `Открывает окно настроек плагина с двумя параметрами:\n\n<b>Стиль иконок</b> — переключает иконки на панели инструментов между SVG (монохромные линейные иконки) и Emoji (цветные эмодзи). Превью стилей показывается прямо в карточках выбора.\n\n<b>Тема</b> — переключает оформление панели инструментов между светлой и тёмной темой. Тёмная тема меняет фон, кнопки и иконки на тёмные тона.\n\nВсе настройки сохраняются и применяются автоматически при следующем запуске панели.`,
+        how: "Запусти через Plugins → Kiss → ⚙️ Настройки. Выбери нужные параметры и нажми «Сохранить»."
       }
     ];
 
@@ -366,7 +842,7 @@
       page.className = "page" + (index === 0 ? " active" : "");
       page.dataset.index = index;
       page.innerHTML = `
-        <div class="page-icon">${item.icon}</div>
+        <div class="page-preview">${item.getPreview ? item.getPreview("svg") : `<div class="page-icon">${item.icon}</div>`}</div>
         <div class="page-title">${item.label}</div>
         <div class="description">${item.description.replace(/\n/g, "<br>")}</div>
         <div class="divider"></div>
@@ -386,53 +862,280 @@
 
   <script>
     const tools = [
-      { icon: "⚡", label: "Секции",    command: "alignAllSections" },
-      { icon: "➡️", label: "Расширить", command: "expandSection"    },
-      { icon: "📐", label: "Тёмная",   command: "autosection"      },
-      { icon: "🗂️", label: "Обернуть", command: "wrap"             },
-      { icon: "➕", label: "Дублировать", command: "duplicate"     },
-      { icon: "🔄", label: "Замена",   command: "replace"          },
-      { icon: "✂️", label: "Нарезка",  command: "slice"            },
-      { icon: "🖼️", label: "В арт",    command: "art"              },
-      { icon: "🔍", label: "Похожие",  command: "findSimilar"      },
-      { icon: "🟠", label: "Средний",  command: "floatingTag"      },
-      { icon: "🔴", label: "Высокий",  command: "urgentTag"        },
-      { icon: "🟢", label: "Готово",   command: "doneTag"          },
+      { icon: IC.grid,     emojiIcon: "⚡", label: "Секции",    command: "alignAllSections" },
+      { icon: IC.chevronL, emojiIcon: "⬅️", command: "expandSectionLeft", iconOnly: true, width: 32 },
+      { icon: IC.chevronR, emojiIcon: "➡️", command: "expandSection",     iconOnly: true, width: 32 },
+      { icon: IC.contrast, emojiIcon: "📐", label: "Тёмная",   command: "autosection" },
+      { icon: IC.frame,    emojiIcon: "🗂️", label: "Обернуть", command: "wrap"        },
+      { icon: IC.code,     emojiIcon: "🚀", label: "Dev",       command: "readyForDev"      },
+      { icon: IC.swap,     emojiIcon: "🔄", label: "Замена",   command: "replace"          },
+      { icon: IC.scissors, emojiIcon: "✂️", label: "Нарезка",  command: "slice", width: 120 },
+      { icon: IC.image,    emojiIcon: "🖼️", label: "В арт",    command: "art"              },
+      { icon: IC.search,   emojiIcon: "🔍", label: "Похожие",  command: "findSimilar"      },
+      { type: "grid", command: "tagGrid", width: 88, buttons: [
+        { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#F59E0B"/></svg>', emojiIcon: "🟠", command: "floatingTag" },
+        { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#EF4444"/></svg>', emojiIcon: "🔴", command: "urgentTag" },
+        { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#22C55E"/></svg>', emojiIcon: "🟢", command: "doneTag" },
+        { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#3B82F6"/></svg>', emojiIcon: "🔵", command: "reviewTag" },
+      ]},
     ];
 
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
       if (!msg) return;
 
+      if (msg.type === "copyToClipboard") {
+        navigator.clipboard.writeText(msg.text).then(() => {
+          parent.postMessage({ pluginMessage: { type: "clipboardDone" } }, "*");
+        });
+        return;
+      }
+
+      if (msg.type === "requestCopyLink") {
+        let fileKey = msg.fileKey;
+
+        // Если fileKey не пришёл — пробуем вытащить из document.referrer
+        if (!fileKey) {
+          const match = document.referrer.match(/figma\.com\/(?:file|design)\/([A-Za-z0-9]+)/);
+          fileKey = match ? match[1] : null;
+        }
+
+        if (fileKey) {
+          const link = "https://www.figma.com/design/" + fileKey + "?node-id=" + msg.nodeId;
+          navigator.clipboard.writeText(link).then(() => {
+            parent.postMessage({ pluginMessage: { type: "clipboardDone" } }, "*");
+          });
+        } else {
+          parent.postMessage({ pluginMessage: { type: "clipboardFail" } }, "*");
+        }
+        return;
+      }
+
       if (msg.type === "showFaq") {
         document.getElementById("toolbar").style.display = "none";
+        document.getElementById("settings").style.display = "none";
         document.querySelector(".header").style.display = "";
         document.querySelector(".body").style.display = "";
-        document.body.style.background = "#1e1e1e";
+        const faqTheme = msg.savedTheme || "light";
+        document.documentElement.classList.toggle("dark", faqTheme === "dark");
+        document.body.style.background = "var(--faq-bg)";
+        // Update FAQ icons and previews based on icon style
+        const faqIconStyle = msg.savedIconStyle || "svg";
+        document.querySelectorAll(".tab").forEach((tab, i) => {
+          if (menu[i]) {
+            const ic = tab.querySelector(".tab-icon");
+            if (ic) ic.innerHTML = faqIconStyle === "emoji" && menu[i].emojiIcon ? menu[i].emojiIcon : menu[i].icon;
+          }
+        });
+        document.querySelectorAll(".page").forEach((page, i) => {
+          if (menu[i]) {
+            const pv = page.querySelector(".page-preview");
+            if (pv) pv.innerHTML = menu[i].getPreview ? menu[i].getPreview(faqIconStyle) : (faqIconStyle === "emoji" && menu[i].emojiIcon ? `<div class="page-icon">${menu[i].emojiIcon}</div>` : `<div class="page-icon">${menu[i].icon}</div>`);
+          }
+        });
+        return;
+      }
+
+      if (msg.type === "showSettings") {
+        document.getElementById("toolbar").style.display = "none";
+        document.querySelector(".header").style.display = "none";
+        document.querySelector(".body").style.display = "none";
+        const sp = document.getElementById("settings");
+        sp.style.display = "flex";
+        document.body.style.background = "var(--set-bg)";
+
+        // Fill previews
+        const previews = [IC.grid, IC.contrast, IC.frame, IC.scissors, IC.search];
+        const emojis = ["⚡", "📐", "🗂️", "✂️", "🔍"];
+        document.getElementById("previewSvg").innerHTML = previews.join("");
+        document.getElementById("previewEmoji").innerHTML = emojis.map(e => `<span style="font-size:16px">${e}</span>`).join("");
+
+        const optS = document.getElementById("optSvg");
+        const optE = document.getElementById("optEmoji");
+        const optL = document.getElementById("optLight");
+        const optD = document.getElementById("optDark");
+        const saveBtn = document.getElementById("settingsSave");
+
+        const curIcon = msg.savedIconStyle || "svg";
+        const curTheme = msg.savedTheme || "light";
+        let chosenIcon = curIcon;
+        let chosenTheme = curTheme;
+
+        // Apply current theme class
+        document.documentElement.classList.toggle("dark", curTheme === "dark");
+
+        optS.classList.toggle("active", curIcon === "svg");
+        optE.classList.toggle("active", curIcon === "emoji");
+        optL.classList.toggle("active", curTheme === "light");
+        optD.classList.toggle("active", curTheme === "dark");
+        saveBtn.style.display = "none";
+
+        function updateSave() {
+          const changed = chosenIcon !== curIcon || chosenTheme !== curTheme;
+          saveBtn.style.display = changed ? "block" : "none";
+          parent.postMessage({ pluginMessage: { type: "resize", width: 360, height: changed ? 350 : 300 } }, "*");
+        }
+
+        optS.onclick = () => { chosenIcon = "svg"; optS.classList.add("active"); optE.classList.remove("active"); updateSave(); };
+        optE.onclick = () => { chosenIcon = "emoji"; optE.classList.add("active"); optS.classList.remove("active"); updateSave(); };
+        optL.onclick = () => { chosenTheme = "light"; optL.classList.add("active"); optD.classList.remove("active"); document.documentElement.classList.remove("dark"); updateSave(); };
+        optD.onclick = () => { chosenTheme = "dark"; optD.classList.add("active"); optL.classList.remove("active"); document.documentElement.classList.add("dark"); updateSave(); };
+
+        saveBtn.onclick = () => {
+          parent.postMessage({ pluginMessage: { type: "saveIconStyle", style: chosenIcon } }, "*");
+          parent.postMessage({ pluginMessage: { type: "saveTheme", theme: chosenTheme } }, "*");
+          parent.postMessage({ pluginMessage: { type: "settingsDone" } }, "*");
+        };
         return;
       }
 
       if (msg.type !== "toolbar") return;
 
       document.getElementById("toolbar").style.display = "flex";
+      document.getElementById("settings").style.display = "none";
       document.querySelector(".header").style.display = "none";
       document.querySelector(".body").style.display = "none";
-      document.body.style.background = "#1e1e1e";
 
-      const VISIBLE = 4;
-      const BTN_W = 68, ARROW_W = 24, GAP = 4, PAD = 4;
-      const calcWidth = (count) => PAD * 2 + count * BTN_W + (count - 1) * GAP + GAP + ARROW_W;
+      let iconStyle = msg.savedIconStyle || "svg";
+      const theme = msg.savedTheme || "light";
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      document.body.style.background = "var(--tb-bg)";
+
+      const VISIBLE = 5;
+      const BTN_W = 68, ICON_W = 42, ARROW_W = 24, GAP = 4, PAD = 4;
+
+      function btnWidth(t) {
+        return t.width || (t.iconOnly ? ICON_W : BTN_W);
+      }
+
+      function calcWidth(visibleTools) {
+        const sum = visibleTools.reduce((acc, t) => acc + btnWidth(t), 0);
+        const gaps = (visibleTools.length - 1) * GAP;
+        return PAD * 2 + sum + gaps + GAP + ARROW_W;
+      }
+
+      function getIcon(t) {
+        return iconStyle === "emoji" && t.emojiIcon ? t.emojiIcon : t.icon;
+      }
+
+      // Применяем сохранённый порядок
+      if (msg.savedOrder) {
+        const orderMap = {};
+        msg.savedOrder.forEach((cmd, idx) => { orderMap[cmd] = idx; });
+        tools.sort((a, b) => {
+          const ka = a.command || "zzz";
+          const kb = b.command || "zzz";
+          return (orderMap[ka] ?? 999) - (orderMap[kb] ?? 999);
+        });
+      }
 
       const toolbar = document.getElementById("toolbar");
       let expanded = false;
 
       const btnEls = tools.map(t => {
+        if (t.type === "group") {
+          const group = document.createElement("div");
+          group.className = "tool-group";
+          group.style.width = t.width + "px";
+          t.buttons.forEach(b => {
+            const btn = document.createElement("button");
+            btn.className = "tool-btn-stacked";
+            btn.innerHTML = `<span class="btn-icon">${getIcon(b)}</span><span class="btn-label">${b.label}</span>`;
+            btn.addEventListener("click", () => {
+              parent.postMessage({ pluginMessage: { type: "run", command: b.command } }, "*");
+            });
+            group.appendChild(btn);
+          });
+          toolbar.appendChild(group);
+          return group;
+        }
+        if (t.type === "grid") {
+          const grid = document.createElement("div");
+          grid.className = "tool-grid";
+          t.buttons.forEach(b => {
+            const btn = document.createElement("button");
+            btn.className = "tool-grid-btn";
+            btn.innerHTML = getIcon(b);
+            btn.addEventListener("click", () => {
+              parent.postMessage({ pluginMessage: { type: "run", command: b.command } }, "*");
+            });
+            grid.appendChild(btn);
+          });
+          toolbar.appendChild(grid);
+          return grid;
+        }
         const btn = document.createElement("button");
         btn.className = "tool-btn";
-        btn.innerHTML = `<span class="btn-icon">${t.icon}</span><span class="btn-label">${t.label}</span>`;
-        btn.addEventListener("click", () => {
-          parent.postMessage({ pluginMessage: { type: "run", command: t.command } }, "*");
-        });
+        btn.style.width = btnWidth(t) + "px";
+        if (t.shortcut) {
+          btn.style.background = "#1f8fff";
+          btn.style.borderRadius = "8px";
+          btn.innerHTML = `<span style="font-size:11px;font-weight:600;color:#fff;letter-spacing:0.02em">${getIcon(t)}</span>`;
+        } else if (t.iconOnly) {
+          btn.style.alignItems = "center";
+          btn.style.justifyContent = "center";
+          btn.style.padding = "0";
+          btn.innerHTML = `<span class="btn-icon" style="font-size:18px">${getIcon(t)}</span>`;
+        } else {
+          btn.innerHTML = `<span class="btn-icon">${getIcon(t)}</span><span class="btn-label">${t.label}</span>`;
+        }
+        if (t.command === "autosection") {
+          const row = document.createElement("div");
+          row.className = "btn-check-row row-top";
+          const kbdIcon = document.createElement("span");
+          kbdIcon.style.cssText = "font-size:10px;color:#999;line-height:1;cursor:pointer;";
+          kbdIcon.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>`;
+          kbdIcon.addEventListener("click", (e) => { e.stopPropagation(); chk.click(); });
+          const chk = document.createElement("input");
+          chk.type = "checkbox";
+          chk.className = "btn-check-sm";
+          chk.title = "Переключать клавиатуру в тёмную";
+          chk.addEventListener("click", e => e.stopPropagation());
+          row.appendChild(kbdIcon);
+          row.appendChild(chk);
+          btn.appendChild(row);
+          btn.addEventListener("click", () => {
+            parent.postMessage({ pluginMessage: { type: "run", command: t.command, withKeyboard: chk.checked } }, "*");
+          });
+        } else if (t.command === "slice") {
+          const row1 = document.createElement("div");
+          row1.className = "btn-check-row row-top";
+          const lbl1 = document.createElement("label");
+          lbl1.textContent = "2.67";
+          const chk1 = document.createElement("input");
+          chk1.type = "checkbox";
+          chk1.className = "btn-check-sm";
+          chk1.title = "Масштаб 2.67";
+          lbl1.addEventListener("click", () => { chk1.click(); });
+          row1.appendChild(lbl1);
+          row1.appendChild(chk1);
+          chk1.addEventListener("click", e => { e.stopPropagation(); if (chk1.checked) chk2.checked = false; });
+          btn.appendChild(row1);
+
+          const row2 = document.createElement("div");
+          row2.className = "btn-check-row row-bottom";
+          const lbl2 = document.createElement("label");
+          lbl2.textContent = "Продукт";
+          const chk2 = document.createElement("input");
+          chk2.type = "checkbox";
+          chk2.className = "btn-check-sm";
+          chk2.title = "Продукт (80/120/240)";
+          lbl2.addEventListener("click", () => { chk2.click(); });
+          row2.appendChild(lbl2);
+          row2.appendChild(chk2);
+          chk2.addEventListener("click", e => { e.stopPropagation(); if (chk2.checked) chk1.checked = false; });
+          btn.appendChild(row2);
+
+          btn.addEventListener("click", () => {
+            parent.postMessage({ pluginMessage: { type: "run", command: "slice", scale267: chk1.checked, product: chk2.checked } }, "*");
+            chk1.checked = false;
+            chk2.checked = false;
+          });
+        } else {
+          btn.addEventListener("click", () => {
+            parent.postMessage({ pluginMessage: { type: "run", command: t.command } }, "*");
+          });
+        }
         toolbar.appendChild(btn);
         return btn;
       });
@@ -447,9 +1150,24 @@
           btn.style.display = (expanded || i < VISIBLE) ? "flex" : "none";
         });
         arrow.textContent = expanded ? "‹" : "›";
-        const visibleCount = expanded ? tools.length : VISIBLE;
-        const width = calcWidth(visibleCount);
+        const visibleTools = expanded ? tools : tools.slice(0, VISIBLE);
+        const width = calcWidth(visibleTools);
         parent.postMessage({ pluginMessage: { type: "resize", width } }, "*");
+      }
+
+      // Update all icons based on iconStyle
+      function updateIcons() {
+        btnEls.forEach((el, i) => {
+          const t = tools[i];
+          if (!t) return;
+          if (t.type === "grid") {
+            const gridBtns = el.querySelectorAll(".tool-grid-btn");
+            t.buttons.forEach((b, j) => { if (gridBtns[j]) gridBtns[j].innerHTML = getIcon(b); });
+          } else {
+            const ic = el.querySelector(".btn-icon");
+            if (ic) ic.innerHTML = getIcon(t);
+          }
+        });
       }
 
       arrow.addEventListener("click", () => {
@@ -457,6 +1175,161 @@
         applyState();
       });
 
+      // Live drag-and-drop reordering
+      const elToTool = new Map();
+      btnEls.forEach((el, i) => elToTool.set(el, tools[i]));
+
+      const placeholder = document.createElement("div");
+      placeholder.className = "drop-indicator";
+      placeholder.style.cssText = "display:none;border:2px dashed #ccc;border-radius:6px;background:rgba(0,0,0,0.03);flex-shrink:0;box-sizing:border-box;";
+
+      btnEls.forEach(el => {
+        el.addEventListener("mousedown", e => {
+          if (e.button !== 0) return;
+          if (e.target.classList.contains("btn-kbd-check")) return;
+
+          const startX = e.clientX;
+          const startY = e.clientY;
+          const rect = el.getBoundingClientRect();
+          const offsetX = e.clientX - rect.left;
+          const offsetY = e.clientY - rect.top;
+          let ghost = null;
+          let dragStarted = false;
+          let origIdx = -1;
+          const elWidth = el.offsetWidth; // save BEFORE el.remove()
+          let lastSwapTime = 0;
+          let lastSwapDir = null;
+
+          function initDrag() {
+            dragStarted = true;
+            origIdx = btnEls.indexOf(el);
+
+            placeholder.style.width  = el.offsetWidth  + "px";
+            placeholder.style.height = el.offsetHeight + "px";
+            placeholder.style.display = "flex";
+            toolbar.insertBefore(placeholder, el);
+            el.remove();
+
+            ghost = el.cloneNode(true);
+            const chk = ghost.querySelector(".btn-kbd-check");
+            if (chk) chk.remove();
+            ghost.style.position   = "fixed";
+            ghost.style.pointerEvents = "none";
+            ghost.style.opacity    = "0.75";
+            ghost.style.zIndex     = "9999";
+            ghost.style.width      = rect.width  + "px";
+            ghost.style.height     = rect.height + "px";
+            ghost.style.left       = rect.left   + "px";
+            ghost.style.top        = rect.top    + "px";
+            ghost.style.boxShadow  = "0 4px 14px rgba(0,0,0,0.18)";
+            ghost.style.borderRadius = "6px";
+            document.body.appendChild(ghost);
+          }
+
+          function updateDrag(e) {
+            ghost.style.left = (e.clientX - offsetX) + "px";
+            ghost.style.top  = (e.clientY - offsetY) + "px";
+
+            // Find neighbours by DOM order (immune to transforms)
+            let rightNeighbour = null, leftNeighbour = null, foundPh = false;
+            for (const child of Array.from(toolbar.children)) {
+              if (child === placeholder) { foundPh = true; continue; }
+              if (child === arrow) break;
+              if (!elToTool.has(child)) continue;
+              if (foundPh && !rightNeighbour) rightNeighbour = child;
+              if (!foundPh) leftNeighbour = child;
+            }
+
+            const ghostLeft  = e.clientX - offsetX;
+            const ghostRight = ghostLeft + elWidth;
+            let swapTarget = null, swapRight = false;
+
+            if (rightNeighbour) {
+              const r = rightNeighbour.getBoundingClientRect();
+              if (ghostRight - r.left > r.width * 0.5) {
+                swapTarget = rightNeighbour;
+                swapRight = true;
+              }
+            }
+            if (!swapTarget && leftNeighbour) {
+              const r = leftNeighbour.getBoundingClientRect();
+              if (r.right - ghostLeft > r.width * 0.5) {
+                swapTarget = leftNeighbour;
+              }
+            }
+
+            const curDir = swapTarget ? (swapRight ? 'r' : 'l') : null;
+            const cooldown = (curDir && curDir === lastSwapDir) ? 20 : 150;
+            if (swapTarget && Date.now() - lastSwapTime > cooldown) {
+              // Clear transforms for accurate FLIP snapshot
+              btnEls.forEach(btn => {
+                if (btn.isConnected) { btn.style.transition = "none"; btn.style.transform = ""; }
+              });
+              const snap = new Map();
+              btnEls.forEach(btn => {
+                if (btn.isConnected) snap.set(btn, btn.getBoundingClientRect().left);
+              });
+
+              lastSwapTime = Date.now();
+              lastSwapDir = curDir;
+
+              if (swapRight) {
+                toolbar.insertBefore(placeholder, swapTarget.nextSibling || arrow);
+              } else {
+                toolbar.insertBefore(placeholder, swapTarget);
+              }
+
+              // FLIP animate
+              btnEls.forEach(btn => {
+                if (!btn.isConnected || !snap.has(btn)) return;
+                const dx = snap.get(btn) - btn.getBoundingClientRect().left;
+                if (Math.abs(dx) < 1) return;
+                btn.style.transform = `translateX(${dx}px)`;
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                  btn.style.transition = "transform 0.15s ease";
+                  btn.style.transform = "";
+                }));
+              });
+            }
+          }
+
+          function finalize() {
+            toolbar.insertBefore(el, placeholder);
+            placeholder.style.display = "none";
+            if (placeholder.isConnected) placeholder.remove();
+            ghost.remove();
+
+            const newBtnEls = Array.from(toolbar.children).filter(c => elToTool.has(c));
+            btnEls.splice(0, btnEls.length, ...newBtnEls);
+            tools.splice(0, tools.length, ...newBtnEls.map(b => elToTool.get(b)));
+
+            applyState();
+            const order = tools.map(t => t.command || "unknown");
+            parent.postMessage({ pluginMessage: { type: "saveOrder", order } }, "*");
+          }
+
+          function onMove(e) {
+            if (!dragStarted) {
+              if (Math.abs(e.clientX - startX) < 5 && Math.abs(e.clientY - startY) < 5) return;
+              initDrag();
+            }
+            updateDrag(e);
+          }
+
+          function onUp() {
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup", onUp);
+            if (!dragStarted) return;
+            finalize();
+            el.addEventListener("click", e => e.stopImmediatePropagation(), { capture: true, once: true });
+          }
+
+          document.addEventListener("mousemove", onMove);
+          document.addEventListener("mouseup", onUp);
+        });
+      });
+
+      if (iconStyle === "emoji") updateIcons();
       applyState();
     };
   </script>
