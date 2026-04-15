@@ -5,6 +5,9 @@
   "main": "code.js",
   "ui": "ui.html",
   "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": ["https://translate.googleapis.com"]
+  },
   "menu": [
     {
       "name": "⚡ Выровнять все секции",
@@ -63,6 +66,10 @@
     {
       "name": "🚀 Ready for Dev",
       "command": "readyForDev"
+    },
+    {
+      "name": "🌐 Перевод",
+      "command": "translate"
     },
     {
       "name": "📖 FAQ",

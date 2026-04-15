@@ -366,7 +366,7 @@
     /* ── TOOLBAR MODE ── */
     #toolbar {
       display: none;
-      align-items: center;
+      align-items: flex-start;
       gap: 4px;
       padding: 4px;
       background: var(--tb-bg);
@@ -383,9 +383,10 @@
       flex-direction: column;
       align-items: flex-start;
       justify-content: space-between;
-      transition: background 0.12s, transform 0.1s;
+      transition: background 0.12s, transform 0.1s, height 0.15s ease-out, padding 0.15s ease-out;
       flex-shrink: 0;
       padding: 5px 0 5px 6px;
+      position: relative;
     }
 
     .tool-btn:hover {
@@ -395,6 +396,65 @@
     .tool-btn:active {
       transform: scale(0.92);
       background: var(--btn-active);
+    }
+
+    #toolbar.compact .tool-btn {
+      height: 25px;
+      padding: 5px 0 0 6px;
+      overflow: hidden;
+    }
+    #toolbar.compact.expanded .tool-btn {
+      height: 50px;
+      padding: 5px 0 5px 6px;
+      overflow: visible;
+    }
+    #toolbar.compact .arrow-btn {
+      height: 25px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #toolbar.compact.expanded .arrow-btn {
+      height: 50px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #toolbar.compact .btn-label {
+      display: none;
+    }
+    #toolbar.compact.expanded .btn-label {
+      display: block;
+    }
+    #toolbar.compact .tool-grid {
+      flex-direction: row;
+      flex-wrap: nowrap;
+      height: 25px;
+      width: 88px;
+      transition: height 0.15s ease-out;
+    }
+    #toolbar.compact .tool-grid-btn {
+      width: 20px;
+      height: 25px;
+      transition: background 0.12s, width 0.15s ease-out, height 0.15s ease-out;
+    }
+    #toolbar.compact.expanded .tool-grid {
+      flex-wrap: wrap;
+      height: 50px;
+      width: 88px;
+    }
+    #toolbar.compact.expanded .tool-grid-btn {
+      width: calc(50% - 1px);
+      height: calc(50% - 1px);
+    }
+    #toolbar.compact .tool-group {
+      height: 25px;
+      transition: height 0.15s ease-out;
+    }
+    #toolbar.compact.expanded .tool-group {
+      height: 50px;
     }
 
     .btn-icon {
@@ -422,6 +482,7 @@
       align-items: center;
       justify-content: center;
       padding: 0;
+      transition: background 0.12s, height 0.15s ease-out;
     }
 
     .arrow-btn:hover {
@@ -676,6 +737,25 @@
         </button>
       </div>
     </div>
+    <div class="settings-section">
+      <div class="settings-label">Окно</div>
+      <div class="settings-options">
+        <button class="settings-card active" id="optNormal">
+          <div class="settings-card-preview" style="display:flex;gap:4px;align-items:center">
+            <div style="width:28px;height:18px;border-radius:4px;background:var(--btn-bg);border:1px solid var(--check-border)"></div>
+            <div style="width:28px;height:18px;border-radius:4px;background:var(--btn-bg);border:1px solid var(--check-border)"></div>
+          </div>
+          <span>Обычное</span>
+        </button>
+        <button class="settings-card" id="optDynamic">
+          <div class="settings-card-preview" style="display:flex;gap:4px;align-items:flex-end">
+            <div style="width:28px;height:10px;border-radius:4px;background:var(--btn-bg);border:1px solid var(--check-border)"></div>
+            <div style="width:28px;height:18px;border-radius:4px;background:var(--btn-hover);border:1px solid var(--check-border)"></div>
+          </div>
+          <span>Динамическое</span>
+        </button>
+      </div>
+    </div>
     <button class="settings-save" id="settingsSave" style="display:none">Сохранить</button>
   </div>
 
@@ -710,6 +790,7 @@
       search:   SVG('<circle cx="7.5" cy="7.5" r="5"/><path d="M11.5 11.5L16 16"/>'),
       sliders:  SVG('<line x1="4" y1="5" x2="4" y2="15"/><line x1="9" y1="3" x2="9" y2="13"/><line x1="14" y1="6" x2="14" y2="16"/><circle cx="4" cy="5" r="2" fill="#888"/><circle cx="9" cy="13" r="2" fill="#888"/><circle cx="14" cy="6" r="2" fill="#888"/>'),
       gear:     SVG('<circle cx="9" cy="9" r="3"/><path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.4 1.4M12.9 12.9l1.4 1.4M3.7 14.3l1.4-1.4M12.9 5.1l1.4-1.4"/>'),
+      translate: SVG('<circle cx="9" cy="9" r="7"/><line x1="2" y1="9" x2="16" y2="9"/><ellipse cx="9" cy="9" rx="2.5" ry="7"/>'),
     };
     const menu = [
       {
@@ -820,7 +901,7 @@
       {
         icon: IC.gear, emojiIcon: "⚙️",
         label: "Настройки",
-        description: `Открывает окно настроек плагина с двумя параметрами:\n\n<b>Стиль иконок</b> — переключает иконки на панели инструментов между SVG (монохромные линейные иконки) и Emoji (цветные эмодзи). Превью стилей показывается прямо в карточках выбора.\n\n<b>Тема</b> — переключает оформление панели инструментов между светлой и тёмной темой. Тёмная тема меняет фон, кнопки и иконки на тёмные тона.\n\nВсе настройки сохраняются и применяются автоматически при следующем запуске панели.`,
+        description: `Открывает окно настроек плагина с тремя параметрами:\n\n<b>Стиль иконок</b> — переключает иконки на панели инструментов между SVG (монохромные линейные иконки) и Emoji (цветные эмодзи). Превью стилей показывается прямо в карточках выбора.\n\n<b>Тема</b> — переключает оформление панели инструментов между светлой и тёмной темой. Тёмная тема меняет фон, кнопки и иконки на тёмные тона.\n\n<b>Окно</b> — режим отображения панели инструментов:\n• <b>Обычное</b> — стандартный вид, все кнопки отображаются в полном размере с иконками и подписями.\n• <b>Динамическое</b> — компактный режим. Кнопки уменьшены по высоте вдвое, подписи скрыты — видны только иконки. При наведении мыши на любую кнопку панель плавно разворачивается до полного размера, показывая все подписи. Когда курсор уходит с панели — она сворачивается обратно. Окно плагина автоматически подстраивает свою высоту под текущее состояние.\n\nВсе настройки сохраняются и применяются автоматически при следующем запуске панели.`,
         how: "Запусти через Plugins → Kiss → ⚙️ Настройки. Выбери нужные параметры и нажми «Сохранить»."
       }
     ];
@@ -863,15 +944,16 @@
   <script>
     const tools = [
       { icon: IC.grid,     emojiIcon: "⚡", label: "Секции",    command: "alignAllSections" },
-      { icon: IC.chevronL, emojiIcon: "⬅️", command: "expandSectionLeft", iconOnly: true, width: 32 },
-      { icon: IC.chevronR, emojiIcon: "➡️", command: "expandSection",     iconOnly: true, width: 32 },
+      { icon: IC.chevronL, emojiIcon: "⬅️", command: "expandSectionLeft", iconOnly: true, width: 32, hasExpandCheck: true },
+      { icon: IC.chevronR, emojiIcon: "➡️", command: "expandSection",     iconOnly: true, width: 32, hasExpandCheck: true },
       { icon: IC.contrast, emojiIcon: "📐", label: "Тёмная",   command: "autosection" },
       { icon: IC.frame,    emojiIcon: "🗂️", label: "Обернуть", command: "wrap"        },
       { icon: IC.code,     emojiIcon: "🚀", label: "Dev",       command: "readyForDev"      },
       { icon: IC.swap,     emojiIcon: "🔄", label: "Замена",   command: "replace"          },
       { icon: IC.scissors, emojiIcon: "✂️", label: "Нарезка",  command: "slice", width: 120 },
       { icon: IC.image,    emojiIcon: "🖼️", label: "В арт",    command: "art"              },
-      { icon: IC.search,   emojiIcon: "🔍", label: "Похожие",  command: "findSimilar"      },
+      { icon: IC.search,   emojiIcon: "🔍", label: "Похожие",  command: "findSimilar", hasSectionCheck: true },
+      { icon: IC.translate, emojiIcon: "🌐", label: "Перевод", command: "translate"        },
       { type: "grid", command: "tagGrid", width: 88, buttons: [
         { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#F59E0B"/></svg>', emojiIcon: "🟠", command: "floatingTag" },
         { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#EF4444"/></svg>', emojiIcon: "🔴", command: "urgentTag" },
@@ -879,6 +961,8 @@
         { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#3B82F6"/></svg>', emojiIcon: "🔵", command: "reviewTag" },
       ]},
     ];
+
+    let expandChkR = null, expandChkL = null;
 
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
@@ -888,6 +972,24 @@
         navigator.clipboard.writeText(msg.text).then(() => {
           parent.postMessage({ pluginMessage: { type: "clipboardDone" } }, "*");
         });
+        return;
+      }
+
+      if (msg.type === "translateTexts") {
+        (async () => {
+          const results = [];
+          for (const text of msg.texts) {
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${msg.lang}&dt=t&q=${encodeURIComponent(text)}`;
+            try {
+              const resp = await fetch(url);
+              const data = await resp.json();
+              results.push(data[0].map(s => s[0]).join(""));
+            } catch (e) {
+              results.push(text);
+            }
+          }
+          parent.postMessage({ pluginMessage: { type: "translationResult", ids: msg.ids, translations: results } }, "*");
+        })();
         return;
       }
 
@@ -954,12 +1056,16 @@
         const optE = document.getElementById("optEmoji");
         const optL = document.getElementById("optLight");
         const optD = document.getElementById("optDark");
+        const optN = document.getElementById("optNormal");
+        const optDy = document.getElementById("optDynamic");
         const saveBtn = document.getElementById("settingsSave");
 
         const curIcon = msg.savedIconStyle || "svg";
         const curTheme = msg.savedTheme || "light";
+        const curDynamic = msg.savedDynamic || "normal";
         let chosenIcon = curIcon;
         let chosenTheme = curTheme;
+        let chosenDynamic = curDynamic;
 
         // Apply current theme class
         document.documentElement.classList.toggle("dark", curTheme === "dark");
@@ -968,38 +1074,52 @@
         optE.classList.toggle("active", curIcon === "emoji");
         optL.classList.toggle("active", curTheme === "light");
         optD.classList.toggle("active", curTheme === "dark");
+        optN.classList.toggle("active", curDynamic === "normal");
+        optDy.classList.toggle("active", curDynamic === "dynamic");
         saveBtn.style.display = "none";
 
         function updateSave() {
-          const changed = chosenIcon !== curIcon || chosenTheme !== curTheme;
+          const changed = chosenIcon !== curIcon || chosenTheme !== curTheme || chosenDynamic !== curDynamic;
           saveBtn.style.display = changed ? "block" : "none";
-          parent.postMessage({ pluginMessage: { type: "resize", width: 360, height: changed ? 350 : 300 } }, "*");
+          parent.postMessage({ pluginMessage: { type: "resize", width: 360, height: changed ? 480 : 430 } }, "*");
         }
 
         optS.onclick = () => { chosenIcon = "svg"; optS.classList.add("active"); optE.classList.remove("active"); updateSave(); };
         optE.onclick = () => { chosenIcon = "emoji"; optE.classList.add("active"); optS.classList.remove("active"); updateSave(); };
         optL.onclick = () => { chosenTheme = "light"; optL.classList.add("active"); optD.classList.remove("active"); document.documentElement.classList.remove("dark"); updateSave(); };
         optD.onclick = () => { chosenTheme = "dark"; optD.classList.add("active"); optL.classList.remove("active"); document.documentElement.classList.add("dark"); updateSave(); };
-
+        optN.onclick = () => { chosenDynamic = "normal"; optN.classList.add("active"); optDy.classList.remove("active"); updateSave(); };
+        optDy.onclick = () => { chosenDynamic = "dynamic"; optDy.classList.add("active"); optN.classList.remove("active"); updateSave(); };
         saveBtn.onclick = () => {
           parent.postMessage({ pluginMessage: { type: "saveIconStyle", style: chosenIcon } }, "*");
           parent.postMessage({ pluginMessage: { type: "saveTheme", theme: chosenTheme } }, "*");
+          parent.postMessage({ pluginMessage: { type: "saveDynamic", value: chosenDynamic } }, "*");
           parent.postMessage({ pluginMessage: { type: "settingsDone" } }, "*");
         };
         return;
       }
 
+      if (msg.type === "frameSelected") {
+        const show = msg.value ? "block" : "none";
+        if (expandChkR) expandChkR.style.display = show;
+        if (expandChkL) expandChkL.style.display = show;
+        return;
+      }
+
       if (msg.type !== "toolbar") return;
 
-      document.getElementById("toolbar").style.display = "flex";
+      const tbEl = document.getElementById("toolbar");
+      tbEl.style.display = "flex";
       document.getElementById("settings").style.display = "none";
       document.querySelector(".header").style.display = "none";
       document.querySelector(".body").style.display = "none";
 
       let iconStyle = msg.savedIconStyle || "svg";
       const theme = msg.savedTheme || "light";
+      const isDynamic = msg.savedDynamic === "dynamic";
       document.documentElement.classList.toggle("dark", theme === "dark");
       document.body.style.background = "var(--tb-bg)";
+      tbEl.classList.toggle("compact", isDynamic);
 
       const VISIBLE = 5;
       const BTN_W = 68, ICON_W = 42, ARROW_W = 24, GAP = 4, PAD = 4;
@@ -1076,10 +1196,30 @@
           btn.style.justifyContent = "center";
           btn.style.padding = "0";
           btn.innerHTML = `<span class="btn-icon" style="font-size:18px">${getIcon(t)}</span>`;
+          if (t.hasExpandCheck) {
+            const echk = document.createElement("input");
+            echk.type = "checkbox";
+            echk.className = "btn-kbd-check";
+            echk.checked = true;
+            echk.style.display = "none";
+            echk.title = "Дублировать фрейм";
+            echk.addEventListener("click", e => {
+              e.stopPropagation();
+              parent.postMessage({ pluginMessage: { type: "saveExpandCheck", command: t.command, checked: echk.checked } }, "*");
+            });
+            btn.appendChild(echk);
+            if (t.command === "expandSection") expandChkR = echk;
+            if (t.command === "expandSectionLeft") expandChkL = echk;
+          }
         } else {
           btn.innerHTML = `<span class="btn-icon">${getIcon(t)}</span><span class="btn-label">${t.label}</span>`;
         }
-        if (t.command === "autosection") {
+        if (t.hasExpandCheck) {
+          btn.addEventListener("click", () => {
+            const chk = t.command === "expandSection" ? expandChkR : expandChkL;
+            parent.postMessage({ pluginMessage: { type: "run", command: t.command, duplicate: chk ? chk.checked : true } }, "*");
+          });
+        } else if (t.command === "autosection") {
           const row = document.createElement("div");
           row.className = "btn-check-row row-top";
           const kbdIcon = document.createElement("span");
@@ -1131,6 +1271,16 @@
             chk1.checked = false;
             chk2.checked = false;
           });
+        } else if (t.hasSectionCheck) {
+          const schk = document.createElement("input");
+          schk.type = "checkbox";
+          schk.className = "btn-kbd-check";
+          schk.title = "Искать только в секции";
+          schk.addEventListener("click", e => e.stopPropagation());
+          btn.appendChild(schk);
+          btn.addEventListener("click", () => {
+            parent.postMessage({ pluginMessage: { type: "run", command: t.command, sectionOnly: schk.checked } }, "*");
+          });
         } else {
           btn.addEventListener("click", () => {
             parent.postMessage({ pluginMessage: { type: "run", command: t.command } }, "*");
@@ -1140,19 +1290,49 @@
         return btn;
       });
 
+      // Restore saved expand checkbox states
+      if (msg.savedExpandChkR !== undefined && msg.savedExpandChkR !== null && expandChkR) expandChkR.checked = msg.savedExpandChkR;
+      if (msg.savedExpandChkL !== undefined && msg.savedExpandChkL !== null && expandChkL) expandChkL.checked = msg.savedExpandChkL;
+
       const arrow = document.createElement("button");
       arrow.className = "tool-btn arrow-btn";
       arrow.textContent = "›";
       toolbar.appendChild(arrow);
 
+      let currentTbWidth = 320;
+      let isHoverExpanded = false;
       function applyState() {
         btnEls.forEach((btn, i) => {
           btn.style.display = (expanded || i < VISIBLE) ? "flex" : "none";
         });
         arrow.textContent = expanded ? "‹" : "›";
         const visibleTools = expanded ? tools : tools.slice(0, VISIBLE);
-        const width = calcWidth(visibleTools);
-        parent.postMessage({ pluginMessage: { type: "resize", width } }, "*");
+        currentTbWidth = calcWidth(visibleTools);
+        const h = isDynamic ? (isHoverExpanded ? 58 : 33) : 58;
+        parent.postMessage({ pluginMessage: { type: "resize", width: currentTbWidth, height: h } }, "*");
+      }
+
+      if (isDynamic) {
+        const expandToolbar = () => {
+          if (!isHoverExpanded) {
+            isHoverExpanded = true;
+            tbEl.classList.add("expanded");
+            parent.postMessage({ pluginMessage: { type: "resize", width: currentTbWidth, height: 58 } }, "*");
+          }
+        };
+        const collapseToolbar = () => {
+          if (isHoverExpanded) {
+            isHoverExpanded = false;
+            tbEl.classList.remove("expanded");
+            parent.postMessage({ pluginMessage: { type: "resize", width: currentTbWidth, height: 33 } }, "*");
+          }
+        };
+        // Expand when hovering any button
+        tbEl.querySelectorAll(".tool-btn, .tool-grid-btn, .tool-btn-stacked").forEach(btn => {
+          btn.addEventListener("mouseenter", expandToolbar);
+        });
+        // Collapse only when mouse leaves the entire toolbar
+        tbEl.addEventListener("mouseleave", collapseToolbar);
       }
 
       // Update all icons based on iconStyle

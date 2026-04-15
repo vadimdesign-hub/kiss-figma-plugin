@@ -2,7 +2,33 @@
 // ГЛАВНЫЙ SWITCH — выбор команды плагина
 // ============================
 let keepAlive = false;
-function tryClose() { if (!keepAlive) tryClose(); }
+let pendingTranslations = 0;
+let lastAddedNode = null;
+let prevSelectionIds = new Set();
+function tryClose() { if (!keepAlive) figma.closePlugin(); }
+
+function checkFrameSelected() {
+  const sel = figma.currentPage.selection;
+  const hasFrame = sel.length === 1 && (sel[0].type === "FRAME" || sel[0].type === "COMPONENT" || sel[0].type === "INSTANCE") && sel[0].parent && sel[0].parent.type === "SECTION";
+  figma.ui.postMessage({ type: "frameSelected", value: hasFrame });
+}
+
+figma.on("selectionchange", () => {
+  if (!keepAlive) return;
+  const sel = figma.currentPage.selection;
+  const curIds = new Set(sel.map(n => n.id));
+
+  // Находим новые элементы (которых не было в предыдущем выделении)
+  const newNodes = sel.filter(n => !prevSelectionIds.has(n.id));
+  if (newNodes.length === 1) {
+    lastAddedNode = newNodes[0];
+  } else if (sel.length === 1) {
+    lastAddedNode = sel[0];
+  }
+
+  prevSelectionIds = curIds;
+  checkFrameSelected();
+});
 
 switch (figma.command) {
 
@@ -82,6 +108,13 @@ case "doneTag":
     findSimilar();
     break;
 
+  // 🌐 Перевод
+  case "translate":
+    keepAlive = true;
+    figma.showUI(__html__, { width: 1, height: 1 });
+    translateFrames();
+    break;
+
   // ❓ FAQ — открывает окно с описанием всех функций
   case "faq":
     figma.showUI(__html__, { width: 860, height: 610, title: "FAQ" });
@@ -95,22 +128,28 @@ case "doneTag":
   // 🎛️ UI — плавающая панель с кнопками
   case "ui":
     keepAlive = true;
-    figma.showUI(__html__, { width: 320, height: 58, title: "Kiss" });
     (async () => {
       const savedOrder = await figma.clientStorage.getAsync("toolOrder");
       const savedIconStyle = await figma.clientStorage.getAsync("iconStyle");
       const savedTheme = await figma.clientStorage.getAsync("theme");
-      figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null });
+      const savedExpandChkR = await figma.clientStorage.getAsync("expandChkR");
+      const savedExpandChkL = await figma.clientStorage.getAsync("expandChkL");
+      const savedDynamic = await figma.clientStorage.getAsync("dynamicToolbar");
+      const initHeight = savedDynamic === "dynamic" ? 33 : 58;
+      figma.showUI(__html__, { width: 320, height: initHeight, title: "Kiss" });
+      figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal" });
+      checkFrameSelected();
     })();
     break;
 
   // ⚙️ Настройки
   case "settings":
-    figma.showUI(__html__, { width: 360, height: 300, title: "Настройки" });
+    figma.showUI(__html__, { width: 360, height: 430, title: "Настройки" });
     (async () => {
       const savedIconStyle = await figma.clientStorage.getAsync("iconStyle");
       const savedTheme = await figma.clientStorage.getAsync("theme");
-      figma.ui.postMessage({ type: "showSettings", savedIconStyle: savedIconStyle || "svg", savedTheme: savedTheme || "light" });
+      const savedDynamic = await figma.clientStorage.getAsync("dynamicToolbar");
+      figma.ui.postMessage({ type: "showSettings", savedIconStyle: savedIconStyle || "svg", savedTheme: savedTheme || "light", savedDynamic: savedDynamic || "normal" });
     })();
     break;
 
@@ -152,21 +191,56 @@ figma.ui.onmessage = async (msg) => {
     await figma.clientStorage.setAsync("theme", msg.theme);
     return;
   }
+  if (msg.type === "saveDynamic") {
+    await figma.clientStorage.setAsync("dynamicToolbar", msg.value);
+    return;
+  }
+  if (msg.type === "saveExpandCheck") {
+    const key = msg.command === "expandSection" ? "expandChkR" : "expandChkL";
+    await figma.clientStorage.setAsync(key, msg.checked);
+    return;
+  }
   if (msg.type === "settingsDone") {
     figma.notify("Настройки применены ✅");
     // Reopen toolbar
-    figma.showUI(__html__, { width: 320, height: 58, title: "Kiss" });
     const savedOrder = await figma.clientStorage.getAsync("toolOrder");
     const savedIconStyle = await figma.clientStorage.getAsync("iconStyle");
     const savedTheme = await figma.clientStorage.getAsync("theme");
-    figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null });
+    const savedExpandChkR = await figma.clientStorage.getAsync("expandChkR");
+    const savedExpandChkL = await figma.clientStorage.getAsync("expandChkL");
+    const savedDynamic = await figma.clientStorage.getAsync("dynamicToolbar");
+    const initHeight = savedDynamic === "dynamic" ? 33 : 58;
+    figma.showUI(__html__, { width: 320, height: initHeight, title: "Kiss" });
+    figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal" });
+    return;
+  }
+  if (msg.type === "translationResult") {
+    const { ids, translations } = msg;
+    for (let i = 0; i < ids.length; i++) {
+      const node = figma.getNodeById(ids[i]);
+      if (node && node.type === "TEXT") {
+        if (node.fontName === figma.mixed) {
+          const len = node.characters.length;
+          for (let j = 0; j < len; j++) {
+            await figma.loadFontAsync(node.getRangeFontName(j, j + 1));
+          }
+        } else {
+          await figma.loadFontAsync(node.fontName);
+        }
+        node.characters = translations[i];
+      }
+    }
+    pendingTranslations--;
+    if (pendingTranslations <= 0) {
+      figma.notify("Перевод завершён ✅");
+    }
     return;
   }
   if (msg.type !== "run") return;
   switch (msg.command) {
     case "alignAllSections": alignAllSections(); break;
-    case "expandSection":    expandSection();       break;
-    case "expandSectionLeft": expandSectionLeft();  break;
+    case "expandSection":    expandSection(msg.duplicate !== false);       break;
+    case "expandSectionLeft": expandSectionLeft(msg.duplicate !== false);  break;
     case "autosection":      await autoSectionAlign(msg.withKeyboard); break;
     case "wrap":             wrapOrAlignSectionClean(); break;
     case "replace":          replaceWithInstance(); break;
@@ -176,13 +250,14 @@ figma.ui.onmessage = async (msg) => {
       else wrapObjectsInSection();
       break;
     case "art":              artTextResize(); break;
-    case "findSimilar":      findSimilar(); break;
+    case "findSimilar":      findSimilar(msg.sectionOnly); break;
     case "floatingTag":      createMediumTag(); break;
     case "urgentTag":        createUrgentTag(); break;
     case "doneTag":          createDoneTag(); break;
     case "reviewTag":        createReviewTag(); break;
     case "readyForDev":      readyForDevSection(); break;
     case "copyLink":         copyLinkToSelection(); break;
+    case "translate":        translateFrames(); break;
   }
 };
 
@@ -191,7 +266,7 @@ figma.ui.onmessage = async (msg) => {
 // ============================
 // Replace With Any Object
 // ============================
-function replaceWithInstance() {
+async function replaceWithInstance() {
 
   const selection = figma.currentPage.selection;
 
@@ -201,11 +276,16 @@ function replaceWithInstance() {
     return;
   }
 
-  // последний выбранный объект — источник
-  const source = selection[selection.length - 1];
+  const waitNotify = figma.notify("⏳ Пожалуйста, подождите...", { timeout: Infinity });
+  await new Promise(r => setTimeout(r, 100));
 
-  // все остальные — цели
-  const targets = selection.slice(0, selection.length - 1);
+  // Последний добавленный в выделение — источник (эталон)
+  const source = lastAddedNode && selection.find(n => n.id === lastAddedNode.id)
+    ? lastAddedNode
+    : selection[selection.length - 1];
+
+  // Все остальные — цели
+  const targets = selection.filter(n => n.id !== source.id);
 
   let replacedCount = 0;
 
@@ -244,6 +324,7 @@ function replaceWithInstance() {
 
   });
 
+  waitNotify.cancel();
   figma.notify(`Заменено объектов: ${replacedCount} 🚀`);
   tryClose();
 }
@@ -260,6 +341,11 @@ async function autoSectionAlign(withKeyboard = false) {
 
   const sel = figma.currentPage.selection;
   let message = "";
+  let waitNotify = null;
+  if (withKeyboard) {
+    waitNotify = figma.notify("⏳ Пожалуйста, подождите...", { timeout: Infinity });
+    await new Promise(r => setTimeout(r, 100));
+  }
 
   function getFrames(nodes) {
     return nodes.filter(
@@ -455,6 +541,7 @@ async function autoSectionAlign(withKeyboard = false) {
     message = "Выделите секцию или фреймы";
   }
 
+  if (waitNotify) waitNotify.cancel();
   figma.notify(message);
   tryClose();
 }
@@ -505,7 +592,7 @@ function wrapObjectsInSection() {
     const offsetY = isRotated ? absT[1][2] - bbox.y : 0;
 
     const wrapper = figma.createFrame();
-    wrapper.name = `Wrapper for ${node.name}`;
+    wrapper.name = node.name;
     wrapper.fills = [];
     wrapper.clipsContent = false;
     wrapper.resize(nodeW + INNER_PADDING * 2, nodeH + INNER_PADDING * 2);
@@ -850,6 +937,13 @@ function wrapOrAlignSectionClean() {
       return;
     }
 
+    // Определяем ориентацию по разбросу центров фреймов ДО перемещения в секцию
+    const centersX = framesToWrap.map(f => f.x + f.width / 2);
+    const centersY = framesToWrap.map(f => f.y + f.height / 2);
+    const spreadX = Math.max(...centersX) - Math.min(...centersX);
+    const spreadY = Math.max(...centersY) - Math.min(...centersY);
+    const orientation = spreadX >= spreadY ? "horizontal" : "vertical";
+
     const section = figma.createSection();
     section.name = "Экраны";
     figma.currentPage.appendChild(section);
@@ -858,11 +952,6 @@ function wrapOrAlignSectionClean() {
 
     // Перемещаем фреймы в секцию без сортировки — порядок сохраняется
     framesToWrap.forEach(f => section.appendChild(f));
-
-    // Определяем ориентацию по bounding box выделенных фреймов
-    const totalWidth = Math.max(...framesToWrap.map(f => f.x + f.width)) - Math.min(...framesToWrap.map(f => f.x));
-    const totalHeight = Math.max(...framesToWrap.map(f => f.y + f.height)) - Math.min(...framesToWrap.map(f => f.y));
-    const orientation = totalWidth >= totalHeight ? "horizontal" : "vertical";
 
     alignRowUniversal(framesToWrap, orientation); // принцип alignRow
     resizeSection(section);
@@ -1556,7 +1645,7 @@ async function createReviewTag() {
 // ============================
 // Find Similar — Найти похожие
 // ============================
-function findSimilar() {
+function findSimilar(sectionOnly) {
   const selection = figma.currentPage.selection;
 
   if (selection.length !== 1) {
@@ -1570,10 +1659,25 @@ function findSimilar() {
   const targetWidth = Math.round(target.width);
   const targetHeight = Math.round(target.height);
 
-  figma.notify("Идет поиск, подождите...", { timeout: Infinity });
+  // Если sectionOnly — ищем родительскую секцию
+  let searchRoot = figma.currentPage;
+  if (sectionOnly) {
+    let parent = target.parent;
+    while (parent && parent.type !== "SECTION") parent = parent.parent;
+    if (parent && parent.type === "SECTION") {
+      searchRoot = parent;
+    } else {
+      figma.notify("Объект не внутри секции");
+      tryClose();
+      return;
+    }
+  }
+
+  const searchNotify = figma.notify("Идет поиск, подождите...", { timeout: Infinity });
 
   setTimeout(() => {
-    const candidates = figma.currentPage.findAllWithCriteria({ types: [target.type] });
+    searchNotify.cancel();
+    const candidates = searchRoot.findAllWithCriteria({ types: [target.type] });
 
     const matches = candidates.filter(node =>
       node.name === targetName &&
@@ -1599,7 +1703,7 @@ function findSimilar() {
 // ============================
 // Expand Section — Увеличить секцию
 // ============================
-function expandSection() {
+function expandSection(duplicate = true) {
   const selection = figma.currentPage.selection;
 
   if (selection.length !== 1) {
@@ -1635,10 +1739,15 @@ function expandSection() {
       )
       .forEach(c => { c.x += expandBy; });
 
-    const clone = frame.clone();
-    clone.x = frame.x + frame.width + GAP;
-    clone.y = frame.y;
-    section.appendChild(clone);
+    if (duplicate) {
+      const clone = frame.clone();
+      clone.x = frame.x + frame.width + GAP;
+      clone.y = frame.y;
+      section.appendChild(clone);
+      figma.currentPage.selection = [clone];
+    } else {
+      figma.currentPage.selection = [section];
+    }
 
     figma.currentPage.children
       .filter(s =>
@@ -1650,7 +1759,6 @@ function expandSection() {
       )
       .forEach(s => { s.x += expandBy; });
 
-    figma.currentPage.selection = [clone];
     figma.notify("Готово ✅");
     tryClose();
     return;
@@ -1685,7 +1793,7 @@ function expandSection() {
 // ============================
 // Расширить секцию влево
 // ============================
-function expandSectionLeft() {
+function expandSectionLeft(duplicate = true) {
   const selection = figma.currentPage.selection;
 
   if (selection.length !== 1) {
@@ -1724,11 +1832,16 @@ function expandSectionLeft() {
       )
       .forEach(c => { c.x += expandBy; });
 
-    // Клон встаёт на место оригинала — слева от сдвинутого фрейма
-    const clone = frame.clone();
-    clone.x = originalFrameX;
-    clone.y = originalFrameY;
-    section.appendChild(clone);
+    if (duplicate) {
+      // Клон встаёт на место оригинала — слева от сдвинутого фрейма
+      const clone = frame.clone();
+      clone.x = originalFrameX;
+      clone.y = originalFrameY;
+      section.appendChild(clone);
+      figma.currentPage.selection = [clone];
+    } else {
+      figma.currentPage.selection = [section];
+    }
 
     // Сдвигаем секции того же ряда, которые стоят правее (как при расширении вправо)
     figma.currentPage.children
@@ -1741,7 +1854,6 @@ function expandSectionLeft() {
       )
       .forEach(s => { s.x += expandBy; });
 
-    figma.currentPage.selection = [clone];
     figma.notify("Готово ✅");
     tryClose();
     return;
@@ -1835,4 +1947,100 @@ function copyLinkToSelection() {
 
   // Передаём nodeId и fileKey (если есть) в UI — UI достанет fileKey из referrer если нужно
   figma.ui.postMessage({ type: "requestCopyLink", nodeId, fileKey: fileKey || null });
+}
+
+// ============================
+// Перевод фреймов
+// ============================
+function translateFrames() {
+  const sel = figma.currentPage.selection;
+  const frames = sel.filter(n => ["FRAME", "COMPONENT", "INSTANCE"].includes(n.type));
+  if (frames.length === 0) {
+    figma.notify("Выдели один или несколько фреймов");
+    tryClose();
+    return;
+  }
+
+  // Сортируем по X чтобы порядок был предсказуемым
+  frames.sort((a, b) => a.x - b.x || a.y - b.y);
+
+  const SECTION_GAP = 240;
+  const GAP = 80;
+  const ROW_GAP = 80;
+  const PADDING = 100;
+  const langs = [
+    { name: "Английский", code: "en" },
+    { name: "Немецкий", code: "de" },
+    { name: "Арабский", code: "ar" }
+  ];
+
+  // Найти правый край всех секций
+  const sections = figma.currentPage.children.filter(c => c.type === "SECTION");
+  const maxRight = sections.length > 0
+    ? Math.max(...sections.map(s => s.x + s.width))
+    : 0;
+
+  // Создать секцию
+  const section = figma.createSection();
+  section.name = "Адаптация для разных языков";
+  figma.currentPage.appendChild(section);
+  section.x = maxRight + SECTION_GAP;
+  section.y = sections.length > 0 ? Math.min(...sections.map(s => s.y)) : 0;
+
+  // Клонировать фреймы — каждый фрейм = ряд, 3 языка = колонки
+  const clones = [];
+  let currentY = PADDING;
+  let maxRowW = 0;
+
+  for (let row = 0; row < frames.length; row++) {
+    const frame = frames[row];
+    const rowW = langs.length * frame.width + (langs.length - 1) * GAP;
+    if (rowW > maxRowW) maxRowW = rowW;
+
+    for (let col = 0; col < langs.length; col++) {
+      const clone = frame.clone();
+      clone.name = langs[col].name;
+      section.appendChild(clone);
+      clone.x = PADDING + col * (frame.width + GAP);
+      clone.y = currentY;
+      clones.push({ node: clone, lang: langs[col].code });
+    }
+    currentY += frame.height + ROW_GAP;
+  }
+
+  // Размер секции
+  const totalW = PADDING * 2 + maxRowW;
+  const totalH = currentY - ROW_GAP + PADDING;
+  section.resizeWithoutConstraints(totalW, totalH);
+
+  // Собрать текстовые слои из каждого клона и отправить на перевод
+  pendingTranslations = clones.length;
+
+  function collectTexts(n) {
+    if (n.name === "Keyboard") return [];
+    const result = [];
+    if (n.type === "TEXT") result.push(n);
+    if ("children" in n) n.children.forEach(c => result.push(...collectTexts(c)));
+    return result;
+  }
+
+  for (const { node, lang } of clones) {
+    const textNodes = collectTexts(node);
+    const texts = textNodes.map(t => t.characters);
+    const ids = textNodes.map(t => t.id);
+    if (texts.length === 0) {
+      pendingTranslations--;
+      continue;
+    }
+    figma.ui.postMessage({ type: "translateTexts", texts, ids, lang });
+  }
+
+  figma.currentPage.selection = [section];
+  figma.viewport.scrollAndZoomIntoView([section]);
+
+  if (pendingTranslations <= 0) {
+    figma.notify("Нет текстовых слоёв для перевода");
+  } else {
+    figma.notify("Переводим...");
+  }
 }
