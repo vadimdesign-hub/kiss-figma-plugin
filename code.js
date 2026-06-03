@@ -2160,18 +2160,24 @@ function customSyncNames() {
 function gridLayout() {
   const GRID_GAP = 48;
   const GROUP_GAP = 80;
+  const SECTION_PADDING = 100;
 
   const selection = [...figma.currentPage.selection];
 
-  if (selection.length < 2) {
-    figma.notify("Выделите хотя бы 2 объекта");
+  // Режим секции: выделена одна секция — работаем с её детьми
+  const sectionMode = selection.length === 1 && selection[0].type === "SECTION";
+  const nodes = sectionMode ? [...selection[0].children] : selection;
+  const section = sectionMode ? selection[0] : null;
+
+  if (nodes.length < 2) {
+    figma.notify("Выделите хотя бы 2 объекта (или секцию с 2+ элементами)");
     tryClose();
     return;
   }
 
   // Группируем по размеру (округляем до целых)
   const groupMap = new Map();
-  for (const node of selection) {
+  for (const node of nodes) {
     const w = Math.round(node.width);
     const h = Math.round(node.height);
     const key = `${w}x${h}`;
@@ -2186,38 +2192,63 @@ function gridLayout() {
     return aArea - bArea;
   });
 
-  // Находим верхний левый угол всех выделенных элементов (абсолютные координаты)
-  let startX = Infinity, startY = Infinity;
-  for (const node of selection) {
-    const bb = node.absoluteBoundingBox;
-    if (bb.x < startX) startX = bb.x;
-    if (bb.y < startY) startY = bb.y;
-  }
+  if (sectionMode) {
+    // В режиме секции координаты относительно самой секции
+    let currentGroupY = SECTION_PADDING;
 
-  let currentGroupY = startY;
+    for (const group of sortedGroups) {
+      const nodeW = Math.round(group[0].width);
+      const nodeH = Math.round(group[0].height);
+      const cols = Math.ceil(Math.sqrt(group.length));
 
-  for (const group of sortedGroups) {
-    const nodeW = Math.round(group[0].width);
-    const nodeH = Math.round(group[0].height);
-    const cols = Math.ceil(Math.sqrt(group.length));
+      group.forEach((node, i) => {
+        node.x = SECTION_PADDING + (i % cols) * (nodeW + GRID_GAP);
+        node.y = currentGroupY + Math.floor(i / cols) * (nodeH + GRID_GAP);
+      });
 
-    group.forEach((node, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const targetAbsX = startX + col * (nodeW + GRID_GAP);
-      const targetAbsY = currentGroupY + row * (nodeH + GRID_GAP);
+      const rows = Math.ceil(group.length / cols);
+      currentGroupY += rows * nodeH + (rows - 1) * GRID_GAP + GROUP_GAP;
+    }
 
+    // Вычисляем bounding box всего содержимого и подгоняем размер секции
+    let maxX = 0, maxY = 0;
+    for (const node of nodes) {
+      maxX = Math.max(maxX, node.x + node.width);
+      maxY = Math.max(maxY, node.y + node.height);
+    }
+    section.resizeWithoutConstraints(maxX + SECTION_PADDING, maxY + SECTION_PADDING);
+
+  } else {
+    // Обычный режим: абсолютные координаты от верхнего левого угла выделения
+    let startX = Infinity, startY = Infinity;
+    for (const node of nodes) {
       const bb = node.absoluteBoundingBox;
-      node.x += targetAbsX - bb.x;
-      node.y += targetAbsY - bb.y;
-    });
+      if (bb.x < startX) startX = bb.x;
+      if (bb.y < startY) startY = bb.y;
+    }
 
-    const rows = Math.ceil(group.length / cols);
-    currentGroupY += rows * nodeH + (rows - 1) * GRID_GAP + GROUP_GAP;
+    let currentGroupY = startY;
+
+    for (const group of sortedGroups) {
+      const nodeW = Math.round(group[0].width);
+      const nodeH = Math.round(group[0].height);
+      const cols = Math.ceil(Math.sqrt(group.length));
+
+      group.forEach((node, i) => {
+        const targetAbsX = startX + (i % cols) * (nodeW + GRID_GAP);
+        const targetAbsY = currentGroupY + Math.floor(i / cols) * (nodeH + GRID_GAP);
+        const bb = node.absoluteBoundingBox;
+        node.x += targetAbsX - bb.x;
+        node.y += targetAbsY - bb.y;
+      });
+
+      const rows = Math.ceil(group.length / cols);
+      currentGroupY += rows * nodeH + (rows - 1) * GRID_GAP + GROUP_GAP;
+    }
   }
 
   const groupCount = sortedGroups.length;
-  const groupWord = groupCount === 1 ? "группе" : groupCount < 5 ? "группах" : "группах";
-  figma.notify(`Сетка готова: ${selection.length} элементов в ${groupCount} ${groupWord}`);
+  const groupWord = groupCount === 1 ? "группе" : "группах";
+  figma.notify(`Сетка готова: ${nodes.length} элементов в ${groupCount} ${groupWord}`);
   tryClose();
 }
