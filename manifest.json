@@ -72,6 +72,14 @@
       "command": "translate"
     },
     {
+      "name": "🔲 Сетка",
+      "command": "gridLayout"
+    },
+    {
+      "name": "⭐ Custom",
+      "command": "custom"
+    },
+    {
       "name": "📖 FAQ",
       "command": "faq"
     },

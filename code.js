@@ -115,6 +115,16 @@ case "doneTag":
     translateFrames();
     break;
 
+  // 🔲 Сетка — расставляет выделенные элементы по сетке, группируя по размеру
+  case "gridLayout":
+    gridLayout();
+    break;
+
+  // ⭐ Custom — синхронизация имён из эталонной секции
+  case "custom":
+    customSyncNames();
+    break;
+
   // ❓ FAQ — открывает окно с описанием всех функций
   case "faq":
     figma.showUI(__html__, { width: 860, height: 610, title: "FAQ" });
@@ -258,6 +268,8 @@ figma.ui.onmessage = async (msg) => {
     case "readyForDev":      readyForDevSection(); break;
     case "copyLink":         copyLinkToSelection(); break;
     case "translate":        translateFrames(); break;
+    case "custom":           customSyncNames(); break;
+    case "gridLayout":       gridLayout(); break;
   }
 };
 
@@ -2043,4 +2055,169 @@ function translateFrames() {
   } else {
     figma.notify("Переводим...");
   }
+}
+
+// ============================
+// ⭐ CUSTOM — Синхронизация имён из эталонной секции
+// ============================
+function customSyncNames() {
+  const sel = figma.currentPage.selection;
+  const sections = sel.filter(n => n.type === "SECTION");
+
+  if (sections.length !== 2) {
+    figma.notify("Выделите ровно 2 секции: эталонную и целевую");
+    tryClose();
+    return;
+  }
+
+  // Эталон — та, которую выбрали первой (не lastAddedNode)
+  // lastAddedNode = последняя добавленная в выделение, значит первая = другая
+  let refSection, targetSection;
+  if (lastAddedNode && sections[1] && lastAddedNode.id === sections[1].id) {
+    refSection = sections[0];
+    targetSection = sections[1];
+  } else if (lastAddedNode && sections[0] && lastAddedNode.id === sections[0].id) {
+    refSection = sections[1];
+    targetSection = sections[0];
+  } else {
+    // Запасной вариант — первый в массиве
+    refSection = sections[0];
+    targetSection = sections[1];
+  }
+
+  // Сортируем дочерние объекты сверху вниз по Y
+  const sortByY = nodes => [...nodes].sort((a, b) => a.y - b.y || a.x - b.x);
+
+  const refItems = sortByY(refSection.children);
+  const targetItems = sortByY(targetSection.children);
+
+  if (!refItems.length) {
+    figma.notify("Эталонная секция пуста");
+    tryClose();
+    return;
+  }
+  if (!targetItems.length) {
+    figma.notify("Целевая секция пуста");
+    tryClose();
+    return;
+  }
+
+  // Переименовываем целевую секцию как эталонную
+  targetSection.name = refSection.name;
+
+  const count = Math.min(refItems.length, targetItems.length);
+  let wrapped = 0;
+  let renamed = 0;
+
+  for (let i = 0; i < count; i++) {
+    const refName = refItems[i].name;
+    const target = targetItems[i];
+
+    if (target.type === "FRAME") {
+      // Уже фрейм — просто переименовываем
+      target.name = refName;
+      renamed++;
+    } else {
+      // Не обёрнут — оборачиваем во фрейм
+      const tX = target.x;
+      const tY = target.y;
+      const w = "width" in target ? target.width : 100;
+      const h = "height" in target ? target.height : 100;
+
+      const frame = figma.createFrame();
+      frame.fills = [];
+      frame.clipsContent = false;
+
+      // Сначала добавляем в секцию — чтобы координаты были в одном пространстве
+      targetSection.appendChild(frame);
+      frame.resize(w, h);
+      frame.x = tX;
+      frame.y = tY;
+      frame.name = refName;
+
+      // Перемещаем объект внутрь фрейма (Figma сохраняет абсолютную позицию)
+      frame.appendChild(target);
+      target.x = 0;
+      target.y = 0;
+
+      wrapped++;
+    }
+  }
+
+  const diff = refItems.length !== targetItems.length
+    ? ` (объектов в секциях: ${refItems.length} и ${targetItems.length}, обработано ${count})`
+    : "";
+
+  figma.notify(`✅ Переименовано: ${renamed}, обёрнуто: ${wrapped}${diff}`);
+  tryClose();
+}
+
+
+
+// ============================
+// Grid Layout — Расставить элементы сеткой
+// ============================
+function gridLayout() {
+  const GRID_GAP = 48;
+  const GROUP_GAP = 80;
+
+  const selection = [...figma.currentPage.selection];
+
+  if (selection.length < 2) {
+    figma.notify("Выделите хотя бы 2 объекта");
+    tryClose();
+    return;
+  }
+
+  // Группируем по размеру (округляем до целых)
+  const groupMap = new Map();
+  for (const node of selection) {
+    const w = Math.round(node.width);
+    const h = Math.round(node.height);
+    const key = `${w}x${h}`;
+    if (!groupMap.has(key)) groupMap.set(key, []);
+    groupMap.get(key).push(node);
+  }
+
+  // Сортируем группы по площади (от меньшей к большей)
+  const sortedGroups = [...groupMap.values()].sort((a, b) => {
+    const aArea = Math.round(a[0].width) * Math.round(a[0].height);
+    const bArea = Math.round(b[0].width) * Math.round(b[0].height);
+    return aArea - bArea;
+  });
+
+  // Находим верхний левый угол всех выделенных элементов (абсолютные координаты)
+  let startX = Infinity, startY = Infinity;
+  for (const node of selection) {
+    const bb = node.absoluteBoundingBox;
+    if (bb.x < startX) startX = bb.x;
+    if (bb.y < startY) startY = bb.y;
+  }
+
+  let currentGroupY = startY;
+
+  for (const group of sortedGroups) {
+    const nodeW = Math.round(group[0].width);
+    const nodeH = Math.round(group[0].height);
+    const cols = Math.ceil(Math.sqrt(group.length));
+
+    group.forEach((node, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const targetAbsX = startX + col * (nodeW + GRID_GAP);
+      const targetAbsY = currentGroupY + row * (nodeH + GRID_GAP);
+
+      const bb = node.absoluteBoundingBox;
+      node.x += targetAbsX - bb.x;
+      node.y += targetAbsY - bb.y;
+    });
+
+    const rows = Math.ceil(group.length / cols);
+    currentGroupY += rows * nodeH + (rows - 1) * GRID_GAP + GROUP_GAP;
+  }
+
+  const groupCount = sortedGroups.length;
+  const groupWord = groupCount === 1 ? "группе" : groupCount < 5 ? "группах" : "группах";
+  figma.notify(`Сетка готова: ${selection.length} элементов в ${groupCount} ${groupWord}`);
+  tryClose();
 }

@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -n \"$(git status --porcelain)\" ]; then git add -A && git commit -m \"auto: claude changes\"; fi",
+            "timeout": 30,
+            "statusMessage": "Committing changes..."
+          }
+        ]
+      }
+    ]
+  }
+}
