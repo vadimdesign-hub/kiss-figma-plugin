@@ -2175,6 +2175,19 @@ function gridLayout() {
     return;
   }
 
+  // Сортируем по визуальному порядку (сверху вниз, слева направо),
+  // чтобы сохранить исходное расположение элементов при перекладке в сетку
+  const getPos = (node) => sectionMode
+    ? { x: node.x, y: node.y }
+    : { x: node.absoluteBoundingBox.x, y: node.absoluteBoundingBox.y };
+  const minH = Math.min(...nodes.map(n => Math.round(n.height)));
+  const rowTolerance = Math.max(20, minH * 0.4);
+  nodes.sort((a, b) => {
+    const pa = getPos(a), pb = getPos(b);
+    if (Math.abs(pa.y - pb.y) > rowTolerance) return pa.y - pb.y;
+    return pa.x - pb.x;
+  });
+
   // Группируем по размеру (округляем до целых)
   const groupMap = new Map();
   for (const node of nodes) {
