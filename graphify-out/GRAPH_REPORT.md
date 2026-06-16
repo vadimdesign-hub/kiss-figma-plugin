@@ -1,11 +1,11 @@
-# Graph Report - /Users/vadim/Desktop/Kiss  (2026-06-03)
+# Graph Report - /Users/vadim/Desktop/Kiss  (2026-06-16)
 
 ## Corpus Check
-- 1 files · ~33,356 words
+- 1 files · ~33,405 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 40 nodes · 59 edges · 6 communities detected
+- 41 nodes · 61 edges · 5 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -15,10 +15,9 @@
 - [[_COMMUNITY_Community 2|Community 2]]
 - [[_COMMUNITY_Community 3|Community 3]]
 - [[_COMMUNITY_Community 4|Community 4]]
-- [[_COMMUNITY_Community 5|Community 5]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `tryClose()` - 21 edges
+1. `tryClose()` - 22 edges
 2. `Kiss Figma Plugin (README overview)` - 13 edges
 3. `artTextResize()` - 3 edges
 4. `replaceWithInstance()` - 2 edges
@@ -45,46 +44,42 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.17
-Nodes (12): Feature: Align All Sections, Feature: Art Dimensions, Feature: Align + Dark Theme, Feature: Expand/Duplicate Left-Right, Feature: Find Similar, Feature: Priority Status Tags (4 colors), Feature: Ready for Dev, Feature: Replace Instance (+4 more)
+Nodes (21): alignAllSections(), autoSectionAlign(), copyLinkToSelection(), createDoneTag(), createMediumTag(), createReviewTag(), createServerIcons(), createUrgentTag() (+13 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.18
-Nodes (9): alignAllSections(), autoSectionAlign(), copyLinkToSelection(), createMediumTag(), createServerIcons(), expandSectionLeft(), replaceWithInstance(), scaleSelection267() (+1 more)
+Cohesion: 0.17
+Nodes (12): Feature: Align All Sections, Feature: Art Dimensions, Feature: Align + Dark Theme, Feature: Expand/Duplicate Left-Right, Feature: Find Similar, Feature: Priority Status Tags (4 colors), Feature: Ready for Dev, Feature: Replace Instance (+4 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.18
-Nodes (11): createDoneTag(), createReviewTag(), createUrgentTag(), customSyncNames(), expandSection(), findSimilar(), gridLayout(), readyForDevSection() (+3 more)
-
-### Community 3 - "Community 3"
 Cohesion: 1.0
 Nodes (2): artTextResize(), roundToEvenDown()
 
-### Community 4 - "Community 4"
+### Community 3 - "Community 3"
 Cohesion: 1.0
 Nodes (2): Screenshot: Toolbar Expanded/Collapsed States, Feature: Floating Toolbar
 
-### Community 5 - "Community 5"
+### Community 4 - "Community 4"
 Cohesion: 1.0
 Nodes (2): Screenshot: FAQ Panel with Sidebar Navigation, Feature: Built-in FAQ
 
 ## Knowledge Gaps
 - **13 isolated node(s):** `Feature: Align All Sections`, `Feature: Expand/Duplicate Left-Right`, `Feature: Align + Dark Theme`, `Feature: Wrap + Align`, `Feature: Replace Instance` (+8 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 3`** (2 nodes): `artTextResize()`, `roundToEvenDown()`
+- **Thin community `Community 2`** (2 nodes): `artTextResize()`, `roundToEvenDown()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 4`** (2 nodes): `Screenshot: Toolbar Expanded/Collapsed States`, `Feature: Floating Toolbar`
+- **Thin community `Community 3`** (2 nodes): `Screenshot: Toolbar Expanded/Collapsed States`, `Feature: Floating Toolbar`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 5`** (2 nodes): `Screenshot: FAQ Panel with Sidebar Navigation`, `Feature: Built-in FAQ`
+- **Thin community `Community 4`** (2 nodes): `Screenshot: FAQ Panel with Sidebar Navigation`, `Feature: Built-in FAQ`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Kiss Figma Plugin (README overview)` connect `Community 0` to `Community 4`, `Community 5`?**
-  _High betweenness centrality (0.139) - this node is a cross-community bridge._
-- **Why does `tryClose()` connect `Community 2` to `Community 1`, `Community 3`?**
-  _High betweenness centrality (0.128) - this node is a cross-community bridge._
-- **Why does `Feature: Floating Toolbar` connect `Community 4` to `Community 0`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
+- **Why does `tryClose()` connect `Community 0` to `Community 2`?**
+  _High betweenness centrality (0.135) - this node is a cross-community bridge._
+- **Why does `Kiss Figma Plugin (README overview)` connect `Community 1` to `Community 3`, `Community 4`?**
+  _High betweenness centrality (0.132) - this node is a cross-community bridge._
+- **Why does `Feature: Floating Toolbar` connect `Community 3` to `Community 1`?**
+  _High betweenness centrality (0.018) - this node is a cross-community bridge._
 - **What connects `Feature: Align All Sections`, `Feature: Expand/Duplicate Left-Right`, `Feature: Align + Dark Theme` to the rest of the system?**
   _13 weakly-connected nodes found - possible documentation gaps or missing edges._

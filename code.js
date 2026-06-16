@@ -2158,32 +2158,37 @@ function customSyncNames() {
 // Custom — Ignore Auto Layout + поднять на верх слоёв
 // ============================
 function customIgnoreAutoLayout() {
-  const selection = [...figma.currentPage.selection];
+  try {
+    const selection = [...figma.currentPage.selection];
 
-  if (selection.length === 0) {
-    figma.notify("Выделите хотя бы один слой");
-    tryClose();
-    return;
-  }
-
-  let count = 0;
-
-  for (const node of selection) {
-    const parent = node.parent;
-    if (!parent) continue;
-
-    // Ignore Auto Layout
-    if ("layoutPositioning" in node) {
-      node.layoutPositioning = "ABSOLUTE";
+    if (selection.length === 0) {
+      figma.notify("Выделите хотя бы один слой");
+      tryClose();
+      return;
     }
 
-    // Перемещаем на верх иерархии внутри родителя
-    parent.insertChild(parent.children.length - 1, node);
-    count++;
-  }
+    let count = 0;
 
-  const word = count === 1 ? "слой" : count < 5 ? "слоя" : "слоёв";
-  figma.notify(`✅ ${count} ${word}: Ignore Auto Layout + поднят наверх`);
+    for (const node of selection) {
+      const parent = node.parent;
+      if (!parent) continue;
+
+      // Ignore Auto Layout — только если родитель имеет авто-лейаут
+      if ("layoutPositioning" in node) {
+        node.layoutPositioning = "ABSOLUTE";
+      }
+
+      // Перемещаем на самый верх иерархии внутри родителя
+      const topIndex = parent.children.length - 1;
+      parent.insertChild(topIndex, node);
+      count++;
+    }
+
+    const word = count === 1 ? "слой" : count < 5 ? "слоя" : "слоёв";
+    figma.notify(`✅ ${count} ${word}: наверх` + (count > 0 ? "" : " (нет слоёв)"));
+  } catch (e) {
+    figma.notify("Ошибка: " + String(e));
+  }
   tryClose();
 }
 

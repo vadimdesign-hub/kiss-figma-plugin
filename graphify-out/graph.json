@@ -82,7 +82,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L1",
       "id": "users_vadim_desktop_kiss_code_js",
-      "community": 1,
+      "community": 0,
       "norm_label": "code.js"
     },
     {
@@ -91,7 +91,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L8",
       "id": "code_tryclose",
-      "community": 2,
+      "community": 0,
       "norm_label": "tryclose()"
     },
     {
@@ -100,7 +100,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L10",
       "id": "code_checkframeselected",
-      "community": 1,
+      "community": 0,
       "norm_label": "checkframeselected()"
     },
     {
@@ -109,7 +109,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L281",
       "id": "code_replacewithinstance",
-      "community": 1,
+      "community": 0,
       "norm_label": "replacewithinstance()"
     },
     {
@@ -118,7 +118,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L348",
       "id": "code_autosectionalign",
-      "community": 1,
+      "community": 0,
       "norm_label": "autosectionalign()"
     },
     {
@@ -127,7 +127,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L564",
       "id": "code_wrapobjectsinsection",
-      "community": 1,
+      "community": 0,
       "norm_label": "wrapobjectsinsection()"
     },
     {
@@ -136,7 +136,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L655",
       "id": "code_scaleselection267",
-      "community": 1,
+      "community": 0,
       "norm_label": "scaleselection267()"
     },
     {
@@ -145,7 +145,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L704",
       "id": "code_createservericons",
-      "community": 1,
+      "community": 0,
       "norm_label": "createservericons()"
     },
     {
@@ -154,7 +154,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L779",
       "id": "code_roundtoevendown",
-      "community": 3,
+      "community": 2,
       "norm_label": "roundtoevendown()"
     },
     {
@@ -163,7 +163,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L785",
       "id": "code_arttextresize",
-      "community": 3,
+      "community": 2,
       "norm_label": "arttextresize()"
     },
     {
@@ -172,7 +172,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L876",
       "id": "code_wraporalignsectionclean",
-      "community": 2,
+      "community": 0,
       "norm_label": "wraporalignsectionclean()"
     },
     {
@@ -181,7 +181,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L981",
       "id": "code_alignallsections",
-      "community": 1,
+      "community": 0,
       "norm_label": "alignallsections()"
     },
     {
@@ -190,7 +190,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L1112",
       "id": "code_createmediumtag",
-      "community": 1,
+      "community": 0,
       "norm_label": "createmediumtag()"
     },
     {
@@ -199,7 +199,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L1248",
       "id": "code_createurgenttag",
-      "community": 2,
+      "community": 0,
       "norm_label": "createurgenttag()"
     },
     {
@@ -208,7 +208,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L1378",
       "id": "code_createdonetag",
-      "community": 2,
+      "community": 0,
       "norm_label": "createdonetag()"
     },
     {
@@ -217,7 +217,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L1542",
       "id": "code_createreviewtag",
-      "community": 2,
+      "community": 0,
       "norm_label": "createreviewtag()"
     },
     {
@@ -226,7 +226,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L1660",
       "id": "code_findsimilar",
-      "community": 2,
+      "community": 0,
       "norm_label": "findsimilar()"
     },
     {
@@ -235,7 +235,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L1718",
       "id": "code_expandsection",
-      "community": 2,
+      "community": 0,
       "norm_label": "expandsection()"
     },
     {
@@ -244,7 +244,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L1808",
       "id": "code_expandsectionleft",
-      "community": 1,
+      "community": 0,
       "norm_label": "expandsectionleft()"
     },
     {
@@ -253,7 +253,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L1906",
       "id": "code_readyfordevsection",
-      "community": 2,
+      "community": 0,
       "norm_label": "readyfordevsection()"
     },
     {
@@ -262,7 +262,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L1948",
       "id": "code_copylinktoselection",
-      "community": 1,
+      "community": 0,
       "norm_label": "copylinktoselection()"
     },
     {
@@ -271,7 +271,7 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L1967",
       "id": "code_translateframes",
-      "community": 2,
+      "community": 0,
       "norm_label": "translateframes()"
     },
     {
@@ -280,16 +280,25 @@
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
       "source_location": "L2063",
       "id": "code_customsyncnames",
-      "community": 2,
+      "community": 0,
       "norm_label": "customsyncnames()"
+    },
+    {
+      "label": "customIgnoreAutoLayout()",
+      "file_type": "code",
+      "source_file": "/Users/vadim/Desktop/Kiss/code.js",
+      "source_location": "L2160",
+      "id": "code_customignoreautolayout",
+      "community": 0,
+      "norm_label": "customignoreautolayout()"
     },
     {
       "label": "gridLayout()",
       "file_type": "code",
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
-      "source_location": "L2160",
+      "source_location": "L2195",
       "id": "code_gridlayout",
-      "community": 2,
+      "community": 0,
       "norm_label": "gridlayout()"
     },
     {
@@ -301,7 +310,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "kiss figma plugin (readme overview)",
       "id": "readme_kiss_plugin"
     },
@@ -314,7 +323,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "feature: align all sections",
       "id": "readme_feature_align_sections"
     },
@@ -327,7 +336,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "feature: expand/duplicate left-right",
       "id": "readme_feature_expand"
     },
@@ -340,7 +349,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "feature: align + dark theme",
       "id": "readme_feature_autosection"
     },
@@ -353,7 +362,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "feature: wrap + align",
       "id": "readme_feature_wrap"
     },
@@ -366,7 +375,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "feature: replace instance",
       "id": "readme_feature_replace"
     },
@@ -379,7 +388,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "feature: asset cutting (slice)",
       "id": "readme_feature_slice"
     },
@@ -392,7 +401,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "feature: art dimensions",
       "id": "readme_feature_art"
     },
@@ -405,7 +414,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "feature: find similar",
       "id": "readme_feature_find_similar"
     },
@@ -418,7 +427,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "feature: priority status tags (4 colors)",
       "id": "readme_feature_priority_tags"
     },
@@ -431,7 +440,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "feature: ready for dev",
       "id": "readme_feature_ready_for_dev"
     },
@@ -444,7 +453,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 3,
       "norm_label": "feature: floating toolbar",
       "id": "readme_feature_toolbar"
     },
@@ -457,7 +466,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "feature: settings (icon style + theme)",
       "id": "readme_feature_settings"
     },
@@ -470,7 +479,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "feature: built-in faq",
       "id": "readme_feature_faq"
     },
@@ -483,7 +492,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 3,
       "norm_label": "screenshot: toolbar expanded/collapsed states",
       "id": "frame_10698003_toolbar_screenshot"
     },
@@ -496,7 +505,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "screenshot: faq panel with sidebar navigation",
       "id": "frame_10698005_faq_screenshot"
     }
@@ -773,6 +782,18 @@
       "source_location": "L2160",
       "weight": 1.0,
       "_src": "users_vadim_desktop_kiss_code_js",
+      "_tgt": "code_customignoreautolayout",
+      "source": "users_vadim_desktop_kiss_code_js",
+      "target": "code_customignoreautolayout",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/Users/vadim/Desktop/Kiss/code.js",
+      "source_location": "L2195",
+      "weight": 1.0,
+      "_src": "users_vadim_desktop_kiss_code_js",
       "_tgt": "code_gridlayout",
       "source": "users_vadim_desktop_kiss_code_js",
       "target": "code_gridlayout",
@@ -1010,7 +1031,19 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "/Users/vadim/Desktop/Kiss/code.js",
-      "source_location": "L2174",
+      "source_location": "L2165",
+      "weight": 1.0,
+      "_src": "code_customignoreautolayout",
+      "_tgt": "code_tryclose",
+      "source": "code_tryclose",
+      "target": "code_customignoreautolayout",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/Users/vadim/Desktop/Kiss/code.js",
+      "source_location": "L2209",
       "weight": 1.0,
       "_src": "code_gridlayout",
       "_tgt": "code_tryclose",
