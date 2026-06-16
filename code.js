@@ -122,7 +122,7 @@ case "doneTag":
 
   // ⭐ Custom — синхронизация имён из эталонной секции
   case "custom":
-    customSyncNames();
+    customIgnoreAutoLayout();
     break;
 
   // ❓ FAQ — открывает окно с описанием всех функций
@@ -268,7 +268,7 @@ figma.ui.onmessage = async (msg) => {
     case "readyForDev":      readyForDevSection(); break;
     case "copyLink":         copyLinkToSelection(); break;
     case "translate":        translateFrames(); break;
-    case "custom":           customSyncNames(); break;
+    case "custom":           customIgnoreAutoLayout(); break;
     case "gridLayout":       gridLayout(); break;
   }
 };
@@ -2149,6 +2149,41 @@ function customSyncNames() {
     : "";
 
   figma.notify(`✅ Переименовано: ${renamed}, обёрнуто: ${wrapped}${diff}`);
+  tryClose();
+}
+
+
+
+// ============================
+// Custom — Ignore Auto Layout + поднять на верх слоёв
+// ============================
+function customIgnoreAutoLayout() {
+  const selection = [...figma.currentPage.selection];
+
+  if (selection.length === 0) {
+    figma.notify("Выделите хотя бы один слой");
+    tryClose();
+    return;
+  }
+
+  let count = 0;
+
+  for (const node of selection) {
+    const parent = node.parent;
+    if (!parent) continue;
+
+    // Ignore Auto Layout
+    if ("layoutPositioning" in node) {
+      node.layoutPositioning = "ABSOLUTE";
+    }
+
+    // Перемещаем на верх иерархии внутри родителя
+    parent.insertChild(parent.children.length - 1, node);
+    count++;
+  }
+
+  const word = count === 1 ? "слой" : count < 5 ? "слоя" : "слоёв";
+  figma.notify(`✅ ${count} ${word}: Ignore Auto Layout + поднят наверх`);
   tryClose();
 }
 
