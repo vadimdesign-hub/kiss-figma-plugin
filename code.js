@@ -2178,9 +2178,10 @@ function customIgnoreAutoLayout() {
         node.layoutPositioning = "ABSOLUTE";
       }
 
-      // Перемещаем на самый верх иерархии внутри родителя
-      const topIndex = parent.children.length - 1;
-      parent.insertChild(topIndex, node);
+      // Перемещаем на самый верх иерархии внутри родителя.
+      // Передаём length (не length-1): после внутреннего удаления узла из массива
+      // индекс оказывается за пределами — Figma аппендит его в конец (верх стека).
+      parent.insertChild(parent.children.length, node);
       count++;
     }
 
