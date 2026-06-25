@@ -2356,6 +2356,11 @@ function makeComponents() {
     node.x = 0;
     node.y = 0;
 
+    // Scale по обеим осям
+    if ("constraints" in node) {
+      node.constraints = { horizontal: "SCALE", vertical: "SCALE" };
+    }
+
     created.push(component);
   }
 
