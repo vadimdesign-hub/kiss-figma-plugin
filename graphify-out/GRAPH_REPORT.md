@@ -1,7 +1,7 @@
 # Graph Report - /Users/vadim/Desktop/Kiss  (2026-06-25)
 
 ## Corpus Check
-- 1 files · ~33,868 words
+- 1 files · ~33,950 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -61,20 +61,20 @@ Nodes (2): artTextResize(), roundToEvenDown()
 
 ### Community 4 - "Community 4"
 Cohesion: 1.0
-Nodes (2): Screenshot: Toolbar Expanded/Collapsed States, Feature: Floating Toolbar
+Nodes (2): Screenshot: FAQ Panel with Sidebar Navigation, Feature: Built-in FAQ
 
 ### Community 5 - "Community 5"
 Cohesion: 1.0
-Nodes (2): Screenshot: FAQ Panel with Sidebar Navigation, Feature: Built-in FAQ
+Nodes (2): Screenshot: Toolbar Expanded/Collapsed States, Feature: Floating Toolbar
 
 ## Knowledge Gaps
 - **13 isolated node(s):** `Feature: Align All Sections`, `Feature: Expand/Duplicate Left-Right`, `Feature: Align + Dark Theme`, `Feature: Wrap + Align`, `Feature: Replace Instance` (+8 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **Thin community `Community 3`** (2 nodes): `artTextResize()`, `roundToEvenDown()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 4`** (2 nodes): `Screenshot: Toolbar Expanded/Collapsed States`, `Feature: Floating Toolbar`
+- **Thin community `Community 4`** (2 nodes): `Screenshot: FAQ Panel with Sidebar Navigation`, `Feature: Built-in FAQ`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 5`** (2 nodes): `Screenshot: FAQ Panel with Sidebar Navigation`, `Feature: Built-in FAQ`
+- **Thin community `Community 5`** (2 nodes): `Screenshot: Toolbar Expanded/Collapsed States`, `Feature: Floating Toolbar`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
@@ -84,7 +84,7 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.141) - this node is a cross-community bridge._
 - **Why does `Kiss Figma Plugin (README overview)` connect `Community 2` to `Community 4`, `Community 5`?**
   _High betweenness centrality (0.126) - this node is a cross-community bridge._
-- **Why does `Feature: Floating Toolbar` connect `Community 4` to `Community 2`?**
+- **Why does `Feature: Floating Toolbar` connect `Community 5` to `Community 2`?**
   _High betweenness centrality (0.017) - this node is a cross-community bridge._
 - **What connects `Feature: Align All Sections`, `Feature: Expand/Duplicate Left-Right`, `Feature: Align + Dark Theme` to the rest of the system?**
   _13 weakly-connected nodes found - possible documentation gaps or missing edges._

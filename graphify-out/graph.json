@@ -462,7 +462,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "feature: floating toolbar",
       "id": "readme_feature_toolbar"
     },
@@ -488,7 +488,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "feature: built-in faq",
       "id": "readme_feature_faq"
     },
@@ -501,7 +501,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "screenshot: toolbar expanded/collapsed states",
       "id": "frame_10698003_toolbar_screenshot"
     },
@@ -514,7 +514,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "screenshot: faq panel with sidebar navigation",
       "id": "frame_10698005_faq_screenshot"
     }

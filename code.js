@@ -2334,50 +2334,91 @@ function makeComponents() {
     if (!parent) continue;
 
     const insertIndex = [...parent.children].indexOf(node);
-
-    // Используем визуальный bounding box — корректно работает с повёрнутыми объектами
-    const bb = node.absoluteBoundingBox;
-    const bbW = Math.round(bb.width);
-    const bbH = Math.round(bb.height);
-
-    // Позиция bounding box в координатах родителя
-    const parentAbsX = parent.type === "PAGE" ? 0 : parent.absoluteTransform[0][2];
-    const parentAbsY = parent.type === "PAGE" ? 0 : parent.absoluteTransform[1][2];
-    const localBBX = bb.x - parentAbsX;
-    const localBBY = bb.y - parentAbsY;
-
-    // Создаём компонент размером с визуальный bounding box
     const component = figma.createComponent();
     component.name = node.name;
-    component.fills = [];
-    component.clipsContent = false;
-    component.resize(bbW, bbH);
 
-    // Вставляем на место bounding box оригинала
-    parent.insertChild(insertIndex, component);
-    component.x = localBBX;
-    component.y = localBBY;
+    if (node.type === "FRAME") {
+      // ── Конвертация фрейма: копируем свойства и переносим детей ──
+      component.resize(node.width, node.height);
+      component.x = node.x;
+      component.y = node.y;
+      component.rotation = node.rotation;
+      component.opacity = node.opacity;
+      component.blendMode = node.blendMode;
+      component.clipsContent = node.clipsContent;
+      component.fills = JSON.parse(JSON.stringify(node.fills));
+      component.strokes = JSON.parse(JSON.stringify(node.strokes));
+      component.strokeWeight = node.strokeWeight;
+      component.strokeAlign = node.strokeAlign;
+      component.effects = JSON.parse(JSON.stringify(node.effects));
 
-    // Перемещаем узел внутрь — Figma сохраняет абсолютную позицию
-    component.appendChild(node);
+      // Corner radius
+      if (node.cornerRadius !== figma.mixed) {
+        component.cornerRadius = node.cornerRadius;
+      } else {
+        component.topLeftRadius     = node.topLeftRadius;
+        component.topRightRadius    = node.topRightRadius;
+        component.bottomLeftRadius  = node.bottomLeftRadius;
+        component.bottomRightRadius = node.bottomRightRadius;
+      }
 
-    // Корректируем смещение: сдвигаем так, чтобы bounding box узла совпал с (0,0) компонента
-    const nodeBBAfter = node.absoluteBoundingBox;
-    const compAbsX = component.absoluteTransform[0][2];
-    const compAbsY = component.absoluteTransform[1][2];
-    node.x -= nodeBBAfter.x - compAbsX;
-    node.y -= nodeBBAfter.y - compAbsY;
+      // Auto layout
+      if (node.layoutMode !== "NONE") {
+        component.layoutMode               = node.layoutMode;
+        component.primaryAxisSizingMode    = node.primaryAxisSizingMode;
+        component.counterAxisSizingMode    = node.counterAxisSizingMode;
+        component.primaryAxisAlignItems    = node.primaryAxisAlignItems;
+        component.counterAxisAlignItems    = node.counterAxisAlignItems;
+        component.paddingLeft              = node.paddingLeft;
+        component.paddingRight             = node.paddingRight;
+        component.paddingTop               = node.paddingTop;
+        component.paddingBottom            = node.paddingBottom;
+        component.itemSpacing              = node.itemSpacing;
+      }
 
-    // Scale по обеим осям
-    if ("constraints" in node) {
-      node.constraints = { horizontal: "SCALE", vertical: "SCALE" };
+      // Вставляем компонент на место фрейма
+      parent.insertChild(insertIndex, component);
+
+      // Переносим всех детей (позиции сохраняются автоматически)
+      for (const child of [...node.children]) {
+        component.appendChild(child);
+      }
+
+      // Удаляем исходный пустой фрейм
+      node.remove();
+
+    } else {
+      // ── Оборачиваем не-фрейм внутрь компонента ──
+      const bb = node.absoluteBoundingBox;
+      const parentAbsX = parent.type === "PAGE" ? 0 : parent.absoluteTransform[0][2];
+      const parentAbsY = parent.type === "PAGE" ? 0 : parent.absoluteTransform[1][2];
+
+      component.fills = [];
+      component.clipsContent = false;
+      component.resize(Math.round(bb.width), Math.round(bb.height));
+
+      parent.insertChild(insertIndex, component);
+      component.x = bb.x - parentAbsX;
+      component.y = bb.y - parentAbsY;
+
+      component.appendChild(node);
+
+      // Корректируем смещение для повёрнутых объектов
+      const nodeBBAfter = node.absoluteBoundingBox;
+      const compAbsX = component.absoluteTransform[0][2];
+      const compAbsY = component.absoluteTransform[1][2];
+      node.x -= nodeBBAfter.x - compAbsX;
+      node.y -= nodeBBAfter.y - compAbsY;
+
+      if ("constraints" in node) {
+        node.constraints = { horizontal: "SCALE", vertical: "SCALE" };
+      }
     }
 
     created.push(component);
   }
 
   figma.currentPage.selection = created;
-
   const n = created.length;
   const word = n === 1 ? "компонент создан" : n < 5 ? "компонента создано" : "компонентов создано";
   figma.notify(`✅ ${n} ${word}`);
