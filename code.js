@@ -2334,27 +2334,39 @@ function makeComponents() {
     if (!parent) continue;
 
     const insertIndex = [...parent.children].indexOf(node);
-    const w = node.width;
-    const h = node.height;
-    const nodeX = node.x;
-    const nodeY = node.y;
 
-    // Создаём мастер-компонент
+    // Используем визуальный bounding box — корректно работает с повёрнутыми объектами
+    const bb = node.absoluteBoundingBox;
+    const bbW = Math.round(bb.width);
+    const bbH = Math.round(bb.height);
+
+    // Позиция bounding box в координатах родителя
+    const parentAbsX = parent.type === "PAGE" ? 0 : parent.absoluteTransform[0][2];
+    const parentAbsY = parent.type === "PAGE" ? 0 : parent.absoluteTransform[1][2];
+    const localBBX = bb.x - parentAbsX;
+    const localBBY = bb.y - parentAbsY;
+
+    // Создаём компонент размером с визуальный bounding box
     const component = figma.createComponent();
     component.name = node.name;
     component.fills = [];
     component.clipsContent = false;
-    component.resize(w, h);
+    component.resize(bbW, bbH);
 
-    // Вставляем на место оригинала в том же родителе
+    // Вставляем на место bounding box оригинала
     parent.insertChild(insertIndex, component);
-    component.x = nodeX;
-    component.y = nodeY;
+    component.x = localBBX;
+    component.y = localBBY;
 
-    // Помещаем оригинальный объект внутрь
+    // Перемещаем узел внутрь — Figma сохраняет абсолютную позицию
     component.appendChild(node);
-    node.x = 0;
-    node.y = 0;
+
+    // Корректируем смещение: сдвигаем так, чтобы bounding box узла совпал с (0,0) компонента
+    const nodeBBAfter = node.absoluteBoundingBox;
+    const compAbsX = component.absoluteTransform[0][2];
+    const compAbsY = component.absoluteTransform[1][2];
+    node.x -= nodeBBAfter.x - compAbsX;
+    node.y -= nodeBBAfter.y - compAbsY;
 
     // Scale по обеим осям
     if ("constraints" in node) {
