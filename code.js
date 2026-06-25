@@ -2339,21 +2339,20 @@ function makeComponents() {
 
     if (node.type === "FRAME") {
       // ── Конвертация фрейма: копируем свойства и переносим детей ──
-      // Rotation НЕ копируем: ставим компонент по absoluteBoundingBox,
-      // тогда дети при appendChild сохраняют абсолютные позиции без переворота.
-      const bb = node.absoluteBoundingBox;
-      const parentAbsX = parent.type === "PAGE" ? 0 : parent.absoluteTransform[0][2];
-      const parentAbsY = parent.type === "PAGE" ? 0 : parent.absoluteTransform[1][2];
+      // Копируем relativeTransform целиком: это сохраняет позицию, поворот И зеркальность (scaleX/Y).
+      // Когда матрица компонента == матрице фрейма, дети при appendChild остаются на тех же
+      // локальных координатах → визуал не меняется ни у повёрнутых, ни у отражённых слоёв.
+      const transform = node.relativeTransform;
 
-      component.resize(Math.round(bb.width), Math.round(bb.height));
-      component.opacity    = node.opacity;
-      component.blendMode  = node.blendMode;
+      component.resize(node.width, node.height);
+      component.opacity      = node.opacity;
+      component.blendMode    = node.blendMode;
       component.clipsContent = node.clipsContent;
-      component.fills      = JSON.parse(JSON.stringify(node.fills));
-      component.strokes    = JSON.parse(JSON.stringify(node.strokes));
+      component.fills        = JSON.parse(JSON.stringify(node.fills));
+      component.strokes      = JSON.parse(JSON.stringify(node.strokes));
       component.strokeWeight = node.strokeWeight;
       component.strokeAlign  = node.strokeAlign;
-      component.effects    = JSON.parse(JSON.stringify(node.effects));
+      component.effects      = JSON.parse(JSON.stringify(node.effects));
 
       // Corner radius
       if (node.cornerRadius !== figma.mixed) {
@@ -2379,12 +2378,11 @@ function makeComponents() {
         component.itemSpacing              = node.itemSpacing;
       }
 
-      // Вставляем компонент по визуальному bounding box (без rotation)
+      // Вставляем и применяем полную матрицу трансформации
       parent.insertChild(insertIndex, component);
-      component.x = bb.x - parentAbsX;
-      component.y = bb.y - parentAbsY;
+      component.relativeTransform = transform;
 
-      // Переносим детей — Figma сохраняет абсолютные позиции и ориентацию
+      // Переносим детей — локальные координаты сохраняются (матрица та же)
       for (const child of [...node.children]) {
         component.appendChild(child);
       }
