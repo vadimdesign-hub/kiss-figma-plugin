@@ -1,7 +1,7 @@
 # Graph Report - /Users/vadim/Desktop/Kiss  (2026-06-25)
 
 ## Corpus Check
-- 1 files · ~34,077 words
+- 1 files · ~34,089 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
