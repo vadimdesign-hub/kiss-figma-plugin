@@ -2339,18 +2339,21 @@ function makeComponents() {
 
     if (node.type === "FRAME") {
       // ── Конвертация фрейма: копируем свойства и переносим детей ──
-      component.resize(node.width, node.height);
-      component.x = node.x;
-      component.y = node.y;
-      component.rotation = node.rotation;
-      component.opacity = node.opacity;
-      component.blendMode = node.blendMode;
+      // Rotation НЕ копируем: ставим компонент по absoluteBoundingBox,
+      // тогда дети при appendChild сохраняют абсолютные позиции без переворота.
+      const bb = node.absoluteBoundingBox;
+      const parentAbsX = parent.type === "PAGE" ? 0 : parent.absoluteTransform[0][2];
+      const parentAbsY = parent.type === "PAGE" ? 0 : parent.absoluteTransform[1][2];
+
+      component.resize(Math.round(bb.width), Math.round(bb.height));
+      component.opacity    = node.opacity;
+      component.blendMode  = node.blendMode;
       component.clipsContent = node.clipsContent;
-      component.fills = JSON.parse(JSON.stringify(node.fills));
-      component.strokes = JSON.parse(JSON.stringify(node.strokes));
+      component.fills      = JSON.parse(JSON.stringify(node.fills));
+      component.strokes    = JSON.parse(JSON.stringify(node.strokes));
       component.strokeWeight = node.strokeWeight;
-      component.strokeAlign = node.strokeAlign;
-      component.effects = JSON.parse(JSON.stringify(node.effects));
+      component.strokeAlign  = node.strokeAlign;
+      component.effects    = JSON.parse(JSON.stringify(node.effects));
 
       // Corner radius
       if (node.cornerRadius !== figma.mixed) {
@@ -2376,10 +2379,12 @@ function makeComponents() {
         component.itemSpacing              = node.itemSpacing;
       }
 
-      // Вставляем компонент на место фрейма
+      // Вставляем компонент по визуальному bounding box (без rotation)
       parent.insertChild(insertIndex, component);
+      component.x = bb.x - parentAbsX;
+      component.y = bb.y - parentAbsY;
 
-      // Переносим всех детей (позиции сохраняются автоматически)
+      // Переносим детей — Figma сохраняет абсолютные позиции и ориентацию
       for (const child of [...node.children]) {
         component.appendChild(child);
       }
