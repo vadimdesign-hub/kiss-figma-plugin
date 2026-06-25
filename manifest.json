@@ -76,6 +76,10 @@
       "command": "gridLayout"
     },
     {
+      "name": "🔷 Компонент",
+      "command": "makeComponent"
+    },
+    {
       "name": "⭐ Custom",
       "command": "custom"
     },

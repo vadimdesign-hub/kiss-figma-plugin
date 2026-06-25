@@ -120,6 +120,11 @@ case "doneTag":
     gridLayout();
     break;
 
+  // 🔷 Компонент — оборачивает каждый выделенный объект в мастер-компонент
+  case "makeComponent":
+    makeComponents();
+    break;
+
   // ⭐ Custom — синхронизация имён из эталонной секции
   case "custom":
     customIgnoreAutoLayout();
@@ -270,6 +275,7 @@ figma.ui.onmessage = async (msg) => {
     case "translate":        translateFrames(); break;
     case "custom":           customIgnoreAutoLayout(); break;
     case "gridLayout":       gridLayout(); break;
+    case "makeComponent":    makeComponents(); break;
   }
 };
 
@@ -2304,5 +2310,59 @@ function gridLayout() {
   const groupCount = sortedGroups.length;
   const groupWord = groupCount === 1 ? "группе" : "группах";
   figma.notify(`Сетка готова: ${nodes.length} элементов в ${groupCount} ${groupWord}`);
+  tryClose();
+}
+
+
+
+// ============================
+// Make Components — обернуть каждый объект в мастер-компонент
+// ============================
+function makeComponents() {
+  const selection = [...figma.currentPage.selection];
+
+  if (selection.length === 0) {
+    figma.notify("Выделите хотя бы один объект");
+    tryClose();
+    return;
+  }
+
+  const created = [];
+
+  for (const node of selection) {
+    const parent = node.parent;
+    if (!parent) continue;
+
+    const insertIndex = [...parent.children].indexOf(node);
+    const w = node.width;
+    const h = node.height;
+    const nodeX = node.x;
+    const nodeY = node.y;
+
+    // Создаём мастер-компонент
+    const component = figma.createComponent();
+    component.name = node.name;
+    component.fills = [];
+    component.clipsContent = false;
+    component.resize(w, h);
+
+    // Вставляем на место оригинала в том же родителе
+    parent.insertChild(insertIndex, component);
+    component.x = nodeX;
+    component.y = nodeY;
+
+    // Помещаем оригинальный объект внутрь
+    component.appendChild(node);
+    node.x = 0;
+    node.y = 0;
+
+    created.push(component);
+  }
+
+  figma.currentPage.selection = created;
+
+  const n = created.length;
+  const word = n === 1 ? "компонент создан" : n < 5 ? "компонента создано" : "компонентов создано";
+  figma.notify(`✅ ${n} ${word}`);
   tryClose();
 }

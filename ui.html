@@ -793,6 +793,7 @@
       translate: SVG('<circle cx="9" cy="9" r="7"/><line x1="2" y1="9" x2="16" y2="9"/><ellipse cx="9" cy="9" rx="2.5" ry="7"/>'),
       custom:   SVG('<path d="M9 2l1.8 3.6L15 6.5l-3 2.9.7 4.1L9 11.4l-3.7 2.1.7-4.1-3-2.9 4.2-.9z"/>'),
       gridLayout: SVG('<rect x="2" y="2" width="4" height="4" rx="0.5"/><rect x="7" y="2" width="4" height="4" rx="0.5"/><rect x="12" y="2" width="4" height="4" rx="0.5"/><rect x="2" y="7" width="4" height="4" rx="0.5"/><rect x="7" y="7" width="4" height="4" rx="0.5"/><rect x="12" y="7" width="4" height="4" rx="0.5"/><rect x="2" y="12" width="4" height="4" rx="0.5"/><rect x="7" y="12" width="4" height="4" rx="0.5"/>'),
+      component: SVG('<path d="M9 2L11.5 5L9 8L6.5 5Z"/><path d="M12 9L14.5 6.5L17 9L14.5 11.5Z"/><path d="M9 10L11.5 13L9 16L6.5 13Z"/><path d="M1 9L3.5 6.5L6 9L3.5 11.5Z"/>'),
     };
     const menu = [
       {
@@ -907,6 +908,12 @@
         how: "Запусти через Plugins → Kiss → ⚙️ Настройки. Выбери нужные параметры и нажми «Сохранить»."
       },
       {
+        icon: IC.component, emojiIcon: "🔷",
+        label: "Компонент",
+        description: `Превращает каждый выделенный объект в мастер-компонент. Выдели 5 объектов — получишь 5 независимых мастер-компонентов, каждый на месте оригинала.\n\nОригинальный объект становится содержимым компонента (position 0,0 внутри него). Имя компонента берётся из имени исходного слоя. Порядок в иерархии и позиция на холсте сохраняются.`,
+        how: "Выдели один или несколько объектов и нажми «Компонент»."
+      },
+      {
         icon: IC.gridLayout, emojiIcon: "🔲",
         label: "Сетка",
         description: `Расставляет выделенные элементы по квадратной сетке с отступами 48 px между объектами.\n\nЕсли элементы <b>одного размера</b> — они выстраиваются в одну сетку (количество колонок = ⌈√N⌉).\n\nЕсли элементы <b>разных размеров</b> — сначала группируются по одинаковым размерам. Группы сортируются по возрастанию площади. Каждая группа выстраивается в свою сетку, каждая следующая располагается на 80 px ниже предыдущей.\n\nНачальная позиция сетки — верхний левый угол bounding box всего выделения.`,
@@ -969,7 +976,8 @@
       { icon: IC.search,   emojiIcon: "🔍", label: "Похожие",  command: "findSimilar", hasSectionCheck: true },
       { icon: IC.translate, emojiIcon: "🌐", label: "Перевод", command: "translate"        },
       { icon: IC.custom,   emojiIcon: "⭐", label: "Custom",   command: "custom"           },
-      { icon: IC.gridLayout, emojiIcon: "🔲", label: "Сетка", command: "gridLayout"        },
+      { icon: IC.gridLayout, emojiIcon: "🔲", label: "Сетка",      command: "gridLayout"   },
+      { icon: IC.component, emojiIcon: "🔷", label: "Компонент", command: "makeComponent"  },
       { type: "grid", command: "tagGrid", width: 88, buttons: [
         { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#F59E0B"/></svg>', emojiIcon: "🟠", command: "floatingTag" },
         { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#EF4444"/></svg>', emojiIcon: "🔴", command: "urgentTag" },
