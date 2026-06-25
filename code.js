@@ -2385,6 +2385,7 @@ function makeComponents() {
       // Переносим детей — локальные координаты сохраняются (матрица та же)
       for (const child of [...node.children]) {
         component.appendChild(child);
+        if ("constraints" in child) child.constraints = { horizontal: "SCALE", vertical: "SCALE" };
       }
 
       // Удаляем исходный пустой фрейм
