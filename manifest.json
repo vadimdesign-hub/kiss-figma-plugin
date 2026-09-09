@@ -10,12 +10,12 @@
   },
   "menu": [
     {
-      "name": "📖 FAQ",
-      "command": "faq"
-    },
-    {
       "name": "🎛️ Панель инструментов",
       "command": "ui"
+    },
+    {
+      "name": "📖 FAQ",
+      "command": "faq"
     }
   ]
 }
