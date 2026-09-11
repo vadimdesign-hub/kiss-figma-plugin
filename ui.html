@@ -1286,8 +1286,8 @@
         icon: IC.grid, emojiIcon: "⚡",
         label: "Выровнять все секции",
         getPreview(s) { const i = s === "emoji" ? "⚡" : IC.grid; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Секции</span></div></div>`; },
-        description: `Одна кнопка — и все секции на странице выстраиваются в аккуратную сетку слева направо, сверху вниз. Секция с компонентами автоматически встаёт первой в своём ряду. Полезно когда после долгой работы страница превратилась в хаос — запускаешь и всё встаёт на своё место.\n\nЕсли перед запуском выделить <b>несколько (2 и более) секций</b> — команда выровняет только их между собой, по тому же принципу, не трогая остальные секции на странице. Точка отсчёта в этом случае — исходный верхний левый угол самой верхней левой из выделенных секций, а не левый край страницы.`,
-        how: "Ничего не нужно выделять — просто запусти команду на нужной странице. Чтобы выровнять только часть секций — сначала выдели 2 и более секций."
+        description: `Одна кнопка — и все секции на странице выстраиваются в аккуратную сетку слева направо, сверху вниз. Секция с компонентами автоматически встаёт первой в своём ряду. Полезно когда после долгой работы страница превратилась в хаос — запускаешь и всё встаёт на своё место.\n\nЕсли перед запуском выделить <b>несколько (2 и более) секций</b> — команда выровняет только их между собой, по тому же принципу, не трогая остальные секции на странице. Точка отсчёта в этом случае — исходный верхний левый угол самой верхней левой из выделенных секций, а не левый край страницы.\n\nНа кнопке есть чекбокс <b>«Максимально плотная компоновка»</b> — работает тоже только при 2+ выделенных секциях. Вместо рядов раскладывает секции по колонкам (как masonry-сетка), стараясь получить максимально компактный, близкий к квадрату результат без пустот. Для этого разрешено немного менять ширину некоторых секций (обычно в пределах ~200px, а если иначе никак не скомпоновать — то и больше) — высота секций не меняется.`,
+        how: "Ничего не нужно выделять — просто запусти команду на нужной странице. Чтобы выровнять только часть секций — сначала выдели 2 и более секций. Чтобы получить максимально плотную компоновку с изменением размеров — включи чекбокс на кнопке перед запуском."
       },
       {
         icon: IC.chevronR, emojiIcon: "➡️",
@@ -1472,7 +1472,7 @@
 
   <script>
     const tools = [
-      { icon: IC.grid,     emojiIcon: "⚡", label: "Секции",    command: "alignAllSections" },
+      { icon: IC.grid,     emojiIcon: "⚡", label: "Секции",    command: "alignAllSections", hasCompactCheck: true },
       { icon: IC.chevronL, emojiIcon: "⬅️", command: "expandSectionLeft", iconOnly: true, width: 32, hasExpandCheck: true },
       { icon: IC.chevronR, emojiIcon: "➡️", command: "expandSection",     iconOnly: true, width: 32, hasExpandCheck: true },
       { icon: IC.contrast, emojiIcon: "📐", label: "Тёмная",   command: "autosection" },
@@ -2157,6 +2157,16 @@
           btn.appendChild(kchk);
           btn.addEventListener("click", () => {
             parent.postMessage({ pluginMessage: { type: "run", command: t.command, keepSize: kchk.checked } }, "*");
+          });
+        } else if (t.hasCompactCheck) {
+          const pchk = document.createElement("input");
+          pchk.type = "checkbox";
+          pchk.className = "btn-kbd-check";
+          pchk.title = "Максимально плотная компоновка (можно менять размер секций) — только если выделено 2+ секций";
+          pchk.addEventListener("click", e => e.stopPropagation());
+          btn.appendChild(pchk);
+          btn.addEventListener("click", () => {
+            parent.postMessage({ pluginMessage: { type: "run", command: t.command, compact: pchk.checked } }, "*");
           });
         } else {
           btn.addEventListener("click", () => {

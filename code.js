@@ -293,7 +293,7 @@ figma.ui.onmessage = async (msg) => {
   }
   if (msg.type !== "run") return;
   switch (msg.command) {
-    case "alignAllSections": alignAllSections(); break;
+    case "alignAllSections": alignAllSections(msg.compact); break;
     case "expandSection":    expandSection(msg.duplicate !== false);       break;
     case "expandSectionLeft": expandSectionLeft(msg.duplicate !== false);  break;
     case "autosection":      await autoSectionAlign(msg.withKeyboard); break;
@@ -1034,7 +1034,7 @@ function wrapOrAlignSectionClean() {
 // ============================================
 // ⚡ ВЫРОВНЯТЬ ВСЕ СЕКЦИИ С КОМПОНЕНТОМ В СВОЕМ РЯДУ
 // ============================================
-function alignAllSections() {
+function alignAllSections(compact) {
   const SECTION_GAP = 240;
   const ROW_GAP = 240;
 
@@ -1048,6 +1048,17 @@ function alignAllSections() {
     n => n.type === "SECTION" && isVisible(n) && isUnlocked(n)
   );
   const scoped = selectedSections.length >= 2;
+
+  // 1️⃣.5 Чекбокс "плотная компоновка" — работает только когда выделено 2+
+  // секций. Вместо рядов по F-паттерну упаковывает секции по колонкам
+  // (как masonry/Pinterest), стараясь получить компактный, близкий к
+  // квадрату результат; разрешено чуть подгонять ширину секций под колонку.
+  if (scoped && compact) {
+    packSectionsCompact(selectedSections);
+    figma.notify(`⚡ Готово! Плотно скомпоновано секций: ${selectedSections.length}`);
+    tryClose();
+    return;
+  }
 
   const sections = scoped
     ? selectedSections
@@ -1185,6 +1196,79 @@ function alignAllSections() {
     ? `⚡ Готово! Выровнено выделенных секций: ${sections.length}`
     : `⚡ Готово! Перестроено секций: ${sections.length}`);
   tryClose();
+}
+
+// ============================
+// Плотная (masonry) компоновка выделенных секций — чекбокс на кнопке "Секции"
+// ============================
+function packSectionsCompact(sections) {
+  const RESIZE_BUDGET = 200; // «мягкий» бюджет подгонки ширины секции под колонку, px
+  const GAP = 80;            // отступ между секциями в плотной раскладке (меньше, чем в обычном режиме — тут цель именно плотность)
+
+  // Якорная точка — исходный верхний левый угол bounding box выделения
+  const anchorX = Math.min(...sections.map(s => s.x));
+  const anchorY = Math.min(...sections.map(s => s.y));
+
+  const items = sections.map(s => ({ section: s, w: s.width, h: s.height }));
+
+  // Раскладывает items по заданному числу колонок: каждая следующая секция
+  // (по убыванию высоты) уходит в самую низкую колонку — среди тех, куда она
+  // влезает по ширине в пределах бюджета; если нигде не влезает — берём всё
+  // равно самую низкую, чтобы не терять секции.
+  function packWithColumns(cols) {
+    const columns = Array.from({ length: cols }, () => ({ width: 0, items: [], height: 0 }));
+    const sorted = items.slice().sort((a, b) => b.h - a.h);
+    for (const it of sorted) {
+      let candidates = columns.filter(c => c.width === 0 || Math.abs(c.width - it.w) <= RESIZE_BUDGET);
+      if (candidates.length === 0) candidates = columns;
+      let col = candidates[0];
+      for (const c of candidates) if (c.height < col.height) col = c;
+      col.items.push(it);
+      col.height += it.h + GAP;
+      col.width = Math.max(col.width, it.w);
+    }
+    return columns;
+  }
+
+  // Перебираем варианты числа колонок и выбираем тот, где итоговый
+  // bounding box ближе всего к квадрату
+  const maxCols = Math.min(items.length, 12);
+  let best = null;
+  for (let cols = 1; cols <= maxCols; cols++) {
+    const columns = packWithColumns(cols);
+    const totalWidth = columns.reduce((sum, c) => sum + c.width, 0) + GAP * (columns.length - 1);
+    const totalHeight = Math.max(...columns.map(c => Math.max(0, c.height - GAP)));
+    const score = Math.abs(totalWidth - totalHeight);
+    if (!best || score < best.score) best = { columns, score };
+  }
+
+  // Растягиваем секции у́же своей колонки под её ширину — убирает рваные
+  // края внутри колонки (если совсем не влезает по бюджету — всё равно
+  // дотягиваем, чтобы получить чистый компактный прямоугольный результат)
+  for (const col of best.columns) {
+    for (const it of col.items) {
+      if (it.w < col.width) it.w = col.width;
+    }
+  }
+
+  // Расставляем позиции: колонки слева направо, внутри колонки — сверху вниз
+  let curX = anchorX;
+  for (const col of best.columns) {
+    let curY = anchorY;
+    for (const it of col.items) {
+      it.x = curX;
+      it.y = curY;
+      curY += it.h + GAP;
+    }
+    curX += col.width + GAP;
+  }
+
+  // Применяем к реальным секциям
+  for (const it of items) {
+    it.section.resize(it.w, it.h);
+    it.section.x = it.x;
+    it.section.y = it.y;
+  }
 }
 // ============================
 // Создать тег "Средний приоритет"
