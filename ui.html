@@ -897,6 +897,7 @@
     .tool-btn-stacked .btn-icon { font-size: 15px; line-height: 1; }
     .tool-btn-stacked .btn-label { font-size: 11px; color: var(--stacked-label); }
     .tool-btn-stacked:hover .btn-label { color: var(--label-hover); }
+    .tool-btn-stacked.icon-only { justify-content: center; padding: 0; }
 
     .tool-grid {
       display: flex;
@@ -1111,6 +1112,19 @@
         </div>
       </div>
     </div>
+    <div class="cz-block">
+      <div class="cz-title">Составные кнопки (↑/↓)</div>
+      <div class="cz-cards">
+        <div class="cz-card">
+          <span class="cz-label">Изменение ширины, px</span>
+          <div class="cz-stepper">
+            <button class="cz-step-btn" id="groupWidthDeltaMinus" type="button">−</button>
+            <span class="cz-step-val" id="groupWidthDeltaVal">0</span>
+            <button class="cz-step-btn" id="groupWidthDeltaPlus" type="button">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div id="simReplacePanel">
     <div class="sr-box">
@@ -1264,14 +1278,16 @@
       component: SVG('<path d="M9 2L11.5 5L9 8L6.5 5Z"/><path d="M12 9L14.5 6.5L17 9L14.5 11.5Z"/><path d="M9 10L11.5 13L9 16L6.5 13Z"/><path d="M1 9L3.5 6.5L6 9L3.5 11.5Z"/>'),
       tag:       SVG('<path d="M2 2h6l8 8-6 6-8-8V2z"/><circle cx="5.5" cy="5.5" r="1" fill="var(--svg-stroke)"/>'),
       moveInto:  SVG('<rect x="8" y="3" width="8" height="12" rx="1.5"/><path d="M1 9h6.5"/><path d="M4.5 6L8 9l-3.5 3"/>'),
+      arrowUp:   SVG('<path d="M9 15V4"/><path d="M4.5 8.5L9 4l4.5 4.5"/>'),
+      arrowDown: SVG('<path d="M9 3v11"/><path d="M4.5 9.5L9 14l4.5-4.5"/>'),
     };
     const menu = [
       {
         icon: IC.grid, emojiIcon: "⚡",
         label: "Выровнять все секции",
         getPreview(s) { const i = s === "emoji" ? "⚡" : IC.grid; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Секции</span></div></div>`; },
-        description: `Одна кнопка — и все секции на странице выстраиваются в аккуратную сетку слева направо, сверху вниз. Секция с компонентами автоматически встаёт первой в своём ряду. Полезно когда после долгой работы страница превратилась в хаос — запускаешь и всё встаёт на своё место.`,
-        how: "Ничего не нужно выделять — просто запусти команду на нужной странице."
+        description: `Одна кнопка — и все секции на странице выстраиваются в аккуратную сетку слева направо, сверху вниз. Секция с компонентами автоматически встаёт первой в своём ряду. Полезно когда после долгой работы страница превратилась в хаос — запускаешь и всё встаёт на своё место.\n\nЕсли перед запуском выделить <b>несколько (2 и более) секций</b> — команда выровняет только их между собой, по тому же принципу, не трогая остальные секции на странице. Точка отсчёта в этом случае — исходный верхний левый угол самой верхней левой из выделенных секций, а не левый край страницы.`,
+        how: "Ничего не нужно выделять — просто запусти команду на нужной странице. Чтобы выровнять только часть секций — сначала выдели 2 и более секций."
       },
       {
         icon: IC.chevronR, emojiIcon: "➡️",
@@ -1404,6 +1420,13 @@
         how: "Выдели набор элементов и нажми кнопку «Сетка»."
       },
       {
+        icon: IC.arrowUp, emojiIcon: "⬆️",
+        label: "На передний / задний план",
+        getPreview(s) { const u = s === "emoji" ? "⬆️" : IC.arrowUp, d = s === "emoji" ? "⬇️" : IC.arrowDown; return `<div class="btn-preview"><div class="btn-preview-item icon-only"><span class="bp-icon">${u}</span></div><div class="btn-preview-item icon-only"><span class="bp-icon">${d}</span></div></div>`; },
+        description: `Составная кнопка из двух половинок — стрелка вверх сверху, стрелка вниз снизу.\n\n<b>Стрелка вверх</b> — перемещает каждый выделенный объект на самый верх иерархии внутри его родителя (как «На передний план» — объект окажется поверх всех остальных слоёв того же родителя).\n\n<b>Стрелка вниз</b> — перемещает объект на самый низ иерархии внутри родителя (как «На задний план» — окажется под всеми остальными слоями того же родителя).\n\nРаботает с любым количеством выделенных объектов сразу — каждый передвигается внутри своего собственного родителя, не выходя за его пределы.`,
+        how: "Выдели один или несколько объектов и нажми верхнюю (наверх) или нижнюю (вниз) половину кнопки."
+      },
+      {
         icon: IC.gear, emojiIcon: "⚙️",
         label: "Настройки (панель)",
         getPreview(s) { const i = s === "emoji" ? "⚙️" : IC.gear; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Настройки</span></div></div>`; },
@@ -1469,6 +1492,10 @@
         { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#EF4444"/></svg>', emojiIcon: "🔴", command: "urgentTag" },
         { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#22C55E"/></svg>', emojiIcon: "🟢", command: "doneTag" },
         { icon: '<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="#3B82F6"/></svg>', emojiIcon: "🔵", command: "reviewTag" },
+      ]},
+      { type: "group", command: "orderGroup", width: 34, buttons: [
+        { icon: IC.arrowUp,   emojiIcon: "⬆️", command: "bringToFront", title: "На передний план (внутри родителя)" },
+        { icon: IC.arrowDown, emojiIcon: "⬇️", command: "sendToBack",   title: "На задний план (внутри родителя)" },
       ]},
     ];
 
@@ -1866,6 +1893,10 @@
       const BTN_W = 68, BTN_H = 50, ARROW_W = 24, GAP = 4, PAD = 4;
       const WIDTH_DELTA_MIN = -40, WIDTH_DELTA_MAX = 60, WIDTH_DELTA_STEP = 1;
       const HEIGHT_DELTA_MIN = -20, HEIGHT_DELTA_MAX = 40, HEIGHT_DELTA_STEP = 1;
+      // Составные кнопки-"столбики" (сейчас — На передний/задний план) меняют
+      // только ширину отдельным счётчиком — высота у них всегда равна высоте
+      // обычной кнопки (2 половинки строго делят её пополам)
+      const GROUP_WIDTH_DELTA_MIN = -14, GROUP_WIDTH_DELTA_MAX = 60, GROUP_WIDTH_DELTA_STEP = 1;
       // Стрелки "влево/вправо" по секциям всегда видны и не участвуют
       // ни в подсчёте "кнопок в свёрнутом виде", ни в скрытии через трей,
       // ни в изменении ширины/высоты
@@ -1874,8 +1905,14 @@
       let visibleCount = typeof msg.savedVisibleCount === "number" ? msg.savedVisibleCount : 3;
       let widthDelta = typeof msg.savedWidthDelta === "number" ? msg.savedWidthDelta : 0;
       let heightDelta = typeof msg.savedHeightDelta === "number" ? msg.savedHeightDelta : 0;
+      let groupWidthDelta = typeof msg.savedGroupWidthDelta === "number" ? msg.savedGroupWidthDelta : 0;
+
+      function groupWidth(t) {
+        return Math.max(20, (t.width || 34) + groupWidthDelta);
+      }
 
       function btnWidth(t) {
+        if (t.type === "group") return groupWidth(t);
         if (t.width) return t.width; // явно заданная ширина (стрелки, Нарезка, Метки) не меняется
         return Math.max(28, BTN_W + widthDelta);
       }
@@ -1947,11 +1984,18 @@
         if (t.type === "group") {
           const group = document.createElement("div");
           group.className = "tool-group";
-          group.style.width = t.width + "px";
+          group.style.width = btnWidth(t) + "px";
+          if (!isDynamic) group.style.height = btnHeight() + "px";
           t.buttons.forEach(b => {
             const btn = document.createElement("button");
             btn.className = "tool-btn-stacked";
-            btn.innerHTML = `<span class="btn-icon">${getIcon(b)}</span><span class="btn-label">${b.label}</span>`;
+            if (b.label) {
+              btn.innerHTML = `<span class="btn-icon">${getIcon(b)}</span><span class="btn-label">${b.label}</span>`;
+            } else {
+              btn.classList.add("icon-only");
+              btn.innerHTML = `<span class="btn-icon">${getIcon(b)}</span>`;
+            }
+            if (b.title) btn.title = b.title;
             btn.addEventListener("click", () => {
               parent.postMessage({ pluginMessage: { type: "run", command: b.command } }, "*");
             });
@@ -2256,6 +2300,12 @@
           if (t.type === "grid") {
             const gridBtns = el.querySelectorAll(".tool-grid-btn");
             t.buttons.forEach((b, j) => { if (gridBtns[j]) gridBtns[j].innerHTML = getIcon(b); });
+          } else if (t.type === "group") {
+            const stackedBtns = el.querySelectorAll(".tool-btn-stacked");
+            t.buttons.forEach((b, j) => {
+              const ic = stackedBtns[j] && stackedBtns[j].querySelector(".btn-icon");
+              if (ic) ic.innerHTML = getIcon(b);
+            });
           } else {
             const ic = el.querySelector(".btn-icon");
             if (ic) ic.innerHTML = getIcon(t);
@@ -2273,7 +2323,7 @@
         parent.postMessage({ pluginMessage: { type: "saveHidden", hidden: [...hiddenSet] } }, "*");
       }
 
-      const TRAY_LABEL_FALLBACK = { expandSectionLeft: "← Секция", expandSection: "→ Секция", tagGrid: "Метки" };
+      const TRAY_LABEL_FALLBACK = { expandSectionLeft: "← Секция", expandSection: "→ Секция", tagGrid: "Метки", orderGroup: "Перед/зад" };
       function trayIcon(t) {
         return (t.type === "grid" || t.type === "group") ? getIcon({ icon: IC.gridLayout, emojiIcon: "🔲" }) : getIcon(t);
       }
@@ -2384,20 +2434,28 @@
       const visCountVal = document.getElementById("visCountVal");
       const widthDeltaVal = document.getElementById("widthDeltaVal");
       const heightDeltaVal = document.getElementById("heightDeltaVal");
+      const groupWidthDeltaVal = document.getElementById("groupWidthDeltaVal");
 
       function updateVisCountUI() { visCountVal.textContent = String(visibleCount); }
       function updateWidthDeltaUI() { widthDeltaVal.textContent = (widthDelta > 0 ? "+" : "") + widthDelta; }
       function updateHeightDeltaUI() { heightDeltaVal.textContent = (heightDelta > 0 ? "+" : "") + heightDelta; }
+      function updateGroupWidthDeltaUI() { groupWidthDeltaVal.textContent = (groupWidthDelta > 0 ? "+" : "") + groupWidthDelta; }
       updateVisCountUI();
       updateWidthDeltaUI();
       updateHeightDeltaUI();
+      updateGroupWidthDeltaUI();
 
       function rebuildButtonWidths() {
         btnEls.forEach(el => {
           const t = elToTool.get(el);
-          if (!t || !el.classList.contains("tool-btn")) return;
-          el.style.width = btnWidth(t) + "px";
-          if (!isDynamic) el.style.height = btnHeight() + "px";
+          if (!t) return;
+          if (el.classList.contains("tool-btn")) {
+            el.style.width = btnWidth(t) + "px";
+            if (!isDynamic) el.style.height = btnHeight() + "px";
+          } else if (el.classList.contains("tool-group")) {
+            el.style.width = btnWidth(t) + "px";
+            if (!isDynamic) el.style.height = btnHeight() + "px";
+          }
         });
         // Высота, в отличие от ширины, применяется и к постоянным элементам —
         // "Настройки" и стрелке раскрытия «›»/«‹»
@@ -2445,6 +2503,20 @@
         heightDelta = Math.min(HEIGHT_DELTA_MAX, heightDelta + HEIGHT_DELTA_STEP);
         parent.postMessage({ pluginMessage: { type: "saveHeightDelta", value: heightDelta } }, "*");
         updateHeightDeltaUI();
+        rebuildButtonWidths();
+        applyState();
+      });
+      document.getElementById("groupWidthDeltaMinus").addEventListener("click", () => {
+        groupWidthDelta = Math.max(GROUP_WIDTH_DELTA_MIN, groupWidthDelta - GROUP_WIDTH_DELTA_STEP);
+        parent.postMessage({ pluginMessage: { type: "saveGroupWidthDelta", value: groupWidthDelta } }, "*");
+        updateGroupWidthDeltaUI();
+        rebuildButtonWidths();
+        applyState();
+      });
+      document.getElementById("groupWidthDeltaPlus").addEventListener("click", () => {
+        groupWidthDelta = Math.min(GROUP_WIDTH_DELTA_MAX, groupWidthDelta + GROUP_WIDTH_DELTA_STEP);
+        parent.postMessage({ pluginMessage: { type: "saveGroupWidthDelta", value: groupWidthDelta } }, "*");
+        updateGroupWidthDeltaUI();
         rebuildButtonWidths();
         applyState();
       });

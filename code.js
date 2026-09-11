@@ -164,9 +164,10 @@ case "doneTag":
       const savedVisibleCount = await figma.clientStorage.getAsync("visibleCount");
       const savedWidthDelta = await figma.clientStorage.getAsync("widthDelta");
       const savedHeightDelta = await figma.clientStorage.getAsync("heightDelta");
+      const savedGroupWidthDelta = await figma.clientStorage.getAsync("groupWidthDelta");
       const initHeight = savedDynamic === "dynamic" ? 33 : 58;
       figma.showUI(__html__, { width: 320, height: initHeight, title: "Kiss" });
-      figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null });
+      figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null });
       checkFrameSelected();
     })();
     break;
@@ -245,6 +246,10 @@ figma.ui.onmessage = async (msg) => {
     await figma.clientStorage.setAsync("heightDelta", msg.value);
     return;
   }
+  if (msg.type === "saveGroupWidthDelta") {
+    await figma.clientStorage.setAsync("groupWidthDelta", msg.value);
+    return;
+  }
   if (msg.type === "settingsDone") {
     figma.notify("Настройки применены ✅");
     // Reopen toolbar
@@ -258,9 +263,10 @@ figma.ui.onmessage = async (msg) => {
     const savedVisibleCount = await figma.clientStorage.getAsync("visibleCount");
     const savedWidthDelta = await figma.clientStorage.getAsync("widthDelta");
     const savedHeightDelta = await figma.clientStorage.getAsync("heightDelta");
+    const savedGroupWidthDelta = await figma.clientStorage.getAsync("groupWidthDelta");
     const initHeight = savedDynamic === "dynamic" ? 33 : 58;
     figma.showUI(__html__, { width: 320, height: initHeight, title: "Kiss" });
-    figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null });
+    figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null });
     return;
   }
   if (msg.type === "translationResult") {
@@ -318,6 +324,8 @@ figma.ui.onmessage = async (msg) => {
     case "custom":           customIgnoreAutoLayout(); break;
     case "gridLayout":       gridLayout(); break;
     case "makeComponent":    makeComponents(); break;
+    case "bringToFront":     bringSelectionToFront(); break;
+    case "sendToBack":       sendSelectionToBack(); break;
   }
 };
 
@@ -1033,10 +1041,17 @@ function alignAllSections() {
   function isVisible(n) { return n && n.visible !== false; }
   function isUnlocked(n) { return n && !n.locked; }
 
-  // 1️⃣ Берём только корневые секции
-  const sections = figma.currentPage.children.filter(
+  // 1️⃣ Если выделено несколько (2+) секций — выравниваем только их между
+  // собой, не трогая остальные секции на странице. Если выделено меньше
+  // двух секций — старое поведение: выравниваем все секции страницы.
+  const selectedSections = figma.currentPage.selection.filter(
     n => n.type === "SECTION" && isVisible(n) && isUnlocked(n)
   );
+  const scoped = selectedSections.length >= 2;
+
+  const sections = scoped
+    ? selectedSections
+    : figma.currentPage.children.filter(n => n.type === "SECTION" && isVisible(n) && isUnlocked(n));
 
   if (sections.length === 0) {
     figma.notify("Нет доступных секций для выравнивания");
@@ -1044,7 +1059,8 @@ function alignAllSections() {
     return;
   }
 
-  // 2️⃣ Выделяем секцию компонентов
+  // 2️⃣ Выделяем секцию компонентов (только в полном режиме — в scoped
+  // режиме все выделенные секции равноправны, даже если это "Компоненты")
   const componentNames = [
     "Компоненты", "Components", "Local Components",
     "Локальные Компоненты", "Локальные компоненты", "Local сomponents"
@@ -1053,11 +1069,15 @@ function alignAllSections() {
   let componentSection = null;
   const otherSections = [];
 
-  for (const s of sections) {
-    if (componentNames.includes(s.name)) {
-      componentSection = s;
-    } else {
-      otherSections.push(s);
+  if (scoped) {
+    otherSections.push(...sections);
+  } else {
+    for (const s of sections) {
+      if (componentNames.includes(s.name)) {
+        componentSection = s;
+      } else {
+        otherSections.push(s);
+      }
     }
   }
 
@@ -1095,10 +1115,20 @@ function alignAllSections() {
 
   const rows = groupByRows(proxies);
 
+  // В scoped-режиме привязываем сетку не к x=0 страницы, а к исходному
+  // верхнему левому углу самой верхней левой из выделенных секций —
+  // остальная часть страницы не должна "прыгать" из-за выравнивания
+  // всего пары секций
+  let anchorX = 0;
+  if (scoped && rows.length) {
+    const topRowSorted = rows[0].items.slice().sort((a, b) => a.proxy.x - b.proxy.x);
+    anchorX = topRowSorted[0].proxy.x;
+  }
+
   // 5️⃣ Вычисляем позиции по F-паттерну
   function layoutRow(row, startY) {
     row.sort((a, b) => a.proxy.x - b.proxy.x);
-    let currentX = 0;
+    let currentX = anchorX;
     let maxHeight = 0;
     for (const item of row) {
       item.proxy.x = currentX;
@@ -1151,7 +1181,9 @@ function alignAllSections() {
     }
   }
 
-  figma.notify(`⚡ Готово! Перестроено секций: ${sections.length}`);
+  figma.notify(scoped
+    ? `⚡ Готово! Выровнено выделенных секций: ${sections.length}`
+    : `⚡ Готово! Перестроено секций: ${sections.length}`);
   tryClose();
 }
 // ============================
@@ -2644,3 +2676,36 @@ function makeComponents() {
   figma.notify(`✅ ${n} ${word}`);
   tryClose();
 }
+
+// ============================
+// Порядок в иерархии: на передний / задний план (в пределах родителя)
+// ============================
+function moveSelectionWithinParent(toFront) {
+  const selection = figma.currentPage.selection;
+
+  if (!selection || selection.length === 0) {
+    figma.notify("⚠️ Выдели один или несколько объектов");
+    tryClose();
+    return;
+  }
+
+  let moved = 0;
+  for (const node of selection) {
+    const container = node.parent;
+    if (!container || typeof container.appendChild !== "function") continue;
+    if (toFront) {
+      container.appendChild(node);   // последний в children — самый верх в Layers panel
+    } else {
+      container.insertChild(0, node); // первый в children — самый низ
+    }
+    moved++;
+  }
+
+  figma.notify(toFront
+    ? `⬆️ На передний план: ${moved}`
+    : `⬇️ На задний план: ${moved}`);
+  tryClose();
+}
+
+function bringSelectionToFront() { moveSelectionWithinParent(true); }
+function sendSelectionToBack() { moveSelectionWithinParent(false); }
