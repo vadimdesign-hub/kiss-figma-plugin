@@ -1202,11 +1202,78 @@ function alignAllSections(compact) {
 // ============================
 // Плотная (masonry) компоновка выделенных секций — чекбокс на кнопке "Секции"
 // ============================
+
+// Меняет размер секции симметрично из центра: добавленное или убранное
+// пространство поровну распределяется по краям (влево/вправо, вверх/вниз),
+// а дочерние объекты сдвигаются на компенсирующую величину — их абсолютная
+// позиция на холсте не меняется. Визуально содержимое остаётся на месте
+// по центру, просто рамка секции растёт/сжимается вокруг него.
+function resizeSectionCentered(section, newW, newH) {
+  const w = Math.max(1, Math.round(newW));
+  const h = Math.max(1, Math.round(newH));
+  const dw = w - section.width;
+  const dh = h - section.height;
+  if (dw === 0 && dh === 0) return;
+  section.x -= dw / 2;
+  section.y -= dh / 2;
+  section.resize(w, h);
+  const kids = section.children || [];
+  for (const c of kids) {
+    c.x += dw / 2;
+    c.y += dh / 2;
+  }
+}
+
+// Обрезает секцию по фактическому содержимому (+ отступ pad) — убирает
+// "мёртвое" пустое пространство, которое уже было внутри секции ещё до
+// компоновки (частая причина больших пустот). Ширина и высота обрезаются
+// независимо — только там, где реально есть запас; содержимое при этом не
+// сдвигается в абсолютных координатах (сдвигается сама секция + локальные
+// координаты детей компенсируются).
+function trimSectionToContent(section, pad) {
+  const kids = section.children;
+  if (!kids || kids.length === 0) return;
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const c of kids) {
+    minX = Math.min(minX, c.x);
+    minY = Math.min(minY, c.y);
+    maxX = Math.max(maxX, c.x + c.width);
+    maxY = Math.max(maxY, c.y + c.height);
+  }
+  const tightW = Math.max(1, Math.round((maxX - minX) + pad * 2));
+  const tightH = Math.max(1, Math.round((maxY - minY) + pad * 2));
+
+  const shrinkW = tightW < section.width;
+  const shrinkH = tightH < section.height;
+  if (!shrinkW && !shrinkH) return;
+
+  const newW = shrinkW ? tightW : section.width;
+  const newH = shrinkH ? tightH : section.height;
+  const shiftX = shrinkW ? (minX - pad) : 0;
+  const shiftY = shrinkH ? (minY - pad) : 0;
+
+  section.x += shiftX;
+  section.y += shiftY;
+  section.resize(newW, newH);
+  for (const c of kids) {
+    c.x -= shiftX;
+    c.y -= shiftY;
+  }
+}
+
 function packSectionsCompact(sections) {
   const RESIZE_BUDGET = 200; // «мягкий» бюджет подгонки ширины секции под колонку, px
   const GAP = 80;            // отступ между секциями в плотной раскладке (меньше, чем в обычном режиме — тут цель именно плотность)
+  const CONTENT_PAD = 60;    // отступ вокруг содержимого при обрезке "мёртвого" пространства внутри секции
 
-  // Якорная точка — исходный верхний левый угол bounding box выделения
+  // 0️⃣ Сначала подрезаем у каждой секции пустой запас вокруг содержимого —
+  // убирает бо́льшую часть пустот, которые были внутри секций изначально,
+  // ещё до самой компоновки
+  for (const s of sections) trimSectionToContent(s, CONTENT_PAD);
+
+  // Якорная точка — верхний левый угол bounding box выделения (уже после
+  // обрезки, чтобы не тянуть якорь за пределы реального содержимого)
   const anchorX = Math.min(...sections.map(s => s.x));
   const anchorY = Math.min(...sections.map(s => s.y));
 
@@ -1245,7 +1312,9 @@ function packSectionsCompact(sections) {
 
   // Растягиваем секции у́же своей колонки под её ширину — убирает рваные
   // края внутри колонки (если совсем не влезает по бюджету — всё равно
-  // дотягиваем, чтобы получить чистый компактный прямоугольный результат)
+  // дотягиваем, чтобы получить чистый компактный прямоугольный результат).
+  // Высоту не трогаем — в masonry-раскладке она и так используется
+  // эффективно (разные колонки просто заканчиваются на разной высоте).
   for (const col of best.columns) {
     for (const it of col.items) {
       if (it.w < col.width) it.w = col.width;
@@ -1264,9 +1333,11 @@ function packSectionsCompact(sections) {
     curX += col.width + GAP;
   }
 
-  // Применяем к реальным секциям
+  // Применяем к реальным секциям: сначала симметрично меняем размер под
+  // колонку (содержимое остаётся отцентрированным — см. resizeSectionCentered),
+  // затем ставим секцию (вместе с содержимым) на итоговую позицию
   for (const it of items) {
-    it.section.resize(it.w, it.h);
+    resizeSectionCentered(it.section, it.w, it.h);
     it.section.x = it.x;
     it.section.y = it.y;
   }
