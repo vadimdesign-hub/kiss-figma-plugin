@@ -11,7 +11,8 @@ function tryClose() { if (!keepAlive) figma.closePlugin(); }
 function checkFrameSelected() {
   const sel = figma.currentPage.selection;
   const hasFrame = sel.length === 1 && (sel[0].type === "FRAME" || sel[0].type === "COMPONENT" || sel[0].type === "INSTANCE") && sel[0].parent && sel[0].parent.type === "SECTION";
-  figma.ui.postMessage({ type: "frameSelected", value: hasFrame });
+  const selectedSectionCount = sel.filter(n => n.type === "SECTION" && n.visible !== false && !n.locked).length;
+  figma.ui.postMessage({ type: "frameSelected", value: hasFrame, multiSections: selectedSectionCount >= 2 });
 }
 
 figma.on("selectionchange", () => {
