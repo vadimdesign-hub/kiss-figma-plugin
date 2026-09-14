@@ -308,6 +308,7 @@ figma.ui.onmessage = async (msg) => {
       else wrapObjectsInSection();
       break;
     case "art":              artTextResize(); break;
+    case "findSimilar":      findSimilar(msg.sectionOnly); break;
     case "similarReplace":   findSimilarForReplace(msg.sectionOnly); break;
     case "focusNode":        focusNode(msg.nodeId); break;
     case "similarReplaceOne": similarReplaceOne(msg.sourceId, msg.targetId); break;
@@ -1920,6 +1921,62 @@ function searchSimilarNodes(source, sectionOnly) {
     Math.round(node.width) === srcWidth &&
     Math.round(node.height) === srcHeight
   );
+}
+
+// ============================
+// Find Similar — Найти похожие (простая версия, без панели замены)
+// ============================
+function findSimilar(sectionOnly) {
+  const selection = figma.currentPage.selection;
+
+  if (selection.length !== 1) {
+    figma.notify("Выдели один объект");
+    tryClose();
+    return;
+  }
+
+  const target = selection[0];
+  const targetName = target.name;
+  const targetWidth = Math.round(target.width);
+  const targetHeight = Math.round(target.height);
+
+  // Если sectionOnly — ищем родительскую секцию
+  let searchRoot = figma.currentPage;
+  if (sectionOnly) {
+    let parent = target.parent;
+    while (parent && parent.type !== "SECTION") parent = parent.parent;
+    if (parent && parent.type === "SECTION") {
+      searchRoot = parent;
+    } else {
+      figma.notify("Объект не внутри секции");
+      tryClose();
+      return;
+    }
+  }
+
+  const searchNotify = figma.notify("Идет поиск, подождите...", { timeout: Infinity });
+
+  setTimeout(() => {
+    searchNotify.cancel();
+    const candidates = searchRoot.findAllWithCriteria({ types: [target.type] });
+
+    const matches = candidates.filter(node =>
+      node.name === targetName &&
+      Math.round(node.width) === targetWidth &&
+      Math.round(node.height) === targetHeight
+    );
+
+    if (matches.length <= 1) {
+      figma.notify("Похожих объектов не найдено");
+      tryClose();
+      return;
+    }
+
+    figma.currentPage.selection = matches;
+    figma.viewport.scrollAndZoomIntoView(matches);
+    figma.notify(`Найдено ${matches.length} похожих объектов`);
+    tryClose();
+  }, 50);
 }
 
 function findSimilarForReplace(sectionOnly) {
