@@ -584,7 +584,7 @@ async function autoSectionAlign(withKeyboard = false) {
     } else {
 
       const newSection = figma.createSection();
-      newSection.name = "Экраны";
+      newSection.name = "Секция";
       figma.currentPage.appendChild(newSection);
 
       newSection.x = Math.min(...framesToWrap.map(f => f.x)) - PADDING;
@@ -1015,7 +1015,7 @@ function wrapOrAlignSectionClean() {
     const orientation = spreadX >= spreadY ? "horizontal" : "vertical";
 
     const section = figma.createSection();
-    section.name = "Экраны";
+    section.name = "Секция";
     figma.currentPage.appendChild(section);
     section.x = Math.min(...framesToWrap.map(f => f.x)) - PADDING;
     section.y = Math.min(...framesToWrap.map(f => f.y)) - PADDING;
