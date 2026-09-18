@@ -6,7 +6,7 @@
   "ui": "ui.html",
   "editorType": ["figma"],
   "networkAccess": {
-    "allowedDomains": ["https://translate.googleapis.com"]
+    "allowedDomains": ["https://translate.googleapis.com", "http://localhost:5000"]
   },
   "menu": [
     {

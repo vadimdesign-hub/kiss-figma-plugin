@@ -328,6 +328,7 @@ figma.ui.onmessage = async (msg) => {
     case "makeComponent":    makeComponents(); break;
     case "bringToFront":     bringSelectionToFront(); break;
     case "sendToBack":       sendSelectionToBack(); break;
+    case "runAgent":         runAgentOnSelection(msg.comment); break;
   }
 };
 
@@ -2922,3 +2923,27 @@ function moveSelectionWithinParent(toFront) {
 
 function bringSelectionToFront() { moveSelectionWithinParent(true); }
 function sendSelectionToBack() { moveSelectionWithinParent(false); }
+
+// ============================
+// AI — отправляет выделенный фрейм локальному Python-агенту (server.py,
+// localhost:5000) на анализ. Сам запрос к агенту (SSE) делает ui.html —
+// у main-песочницы нет доступа к сети, только к figma.*. См. agent/PLUGIN_INTEGRATION.md.
+// ============================
+function runAgentOnSelection(comment) {
+  const node = figma.currentPage.selection[0];
+  if (!node) {
+    figma.notify("⚠️ Сначала выдели фрейм или компонент");
+    return;
+  }
+  if (!figma.fileKey) {
+    figma.notify("⚠️ Не удалось определить файл — работает только в обычном сохранённом файле Figma");
+    return;
+  }
+  figma.ui.postMessage({
+    type: "agent-target",
+    fileKey: figma.fileKey,
+    nodeId: node.id,
+    nodeName: node.name,
+    comment: !!comment,
+  });
+}
