@@ -871,7 +871,7 @@
     .sr-btn.primary:hover { filter: brightness(1.08); }
     .sr-btn.danger { color: #c0392b; }
 
-    /* Панель "AI" — отправляет выделенный фрейм локальному агенту (server.py)
+    /* Панель "QA" — отправляет выделенный фрейм локальному агенту (server.py)
        и стримит находки по мере анализа (SSE) */
     #agentPanel {
       display: none;
@@ -1356,7 +1356,7 @@
   <div id="agentPanel">
     <div class="ag-card">
       <div class="ag-header">
-        <span class="ag-title">AI-проверка дизайна</span>
+        <span class="ag-title">QA-проверка дизайна</span>
         <span class="ag-scope" id="agScope"></span>
       </div>
       <div class="ag-status" id="agStatus"></div>
@@ -1373,7 +1373,7 @@
           <span class="ag-opt-label">Оставлять комментарии</span>
         </label>
         <label class="ag-opt" title="Игнорировать itemSpacing — не проверять отступы между элементами">
-          <span class="ag-switch"><input type="checkbox" id="agOptSpacing" class="ag-switch-input" /><span class="ag-switch-track"></span></span>
+          <span class="ag-switch"><input type="checkbox" id="agOptSpacing" class="ag-switch-input" checked /><span class="ag-switch-track"></span></span>
           <span class="ag-opt-label">Игнорировать itemSpacing</span>
         </label>
       </div>
@@ -1635,10 +1635,10 @@
       },
       {
         icon: IC.custom, emojiIcon: "✨",
-        label: "AI",
-        getPreview(s) { const i = s === "emoji" ? "✨" : IC.custom; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">AI</span></div></div>`; },
-        description: `Выдели фрейм или компонент и нажми «AI» — откроется панель, а не сразу запустится анализ. В панели три флажка (все выключены по умолчанию):\n\n• <b>Проставлять комментарии</b> — если включить, найденные замечания сразу проставятся комментариями прямо в Figma; выключено — только анализ, файл не меняется.\n• <b>Включая скрытые элементы</b> — учитывать в анализе скрытые слои.\n• <b>Игнорировать отступы между элементами</b> — не проверять расстояния между объектами.\n\nПосле «Начать анализ» открывается живой лог — находки появляются по одной, по мере того как агент их находит, а не всё сразу в конце. Клик по находке в списке (если у неё есть ссылка на объект) переводит фокус Figma на него.\n\nСсылку на файл плагин обычно определяет сам. Если не получилось (например в Desktop-приложении) — панель попросит вставить её вручную: скопируй через ⌘L «Скопировать ссылку на выделение», вставь в поле.\n\nПовторный клик по кнопке, пока панель открыта, закрывает её.\n\nТребует, чтобы локальный агент был запущен (см. agent/PLUGIN_INTEGRATION.md и start.command в его папке) — если он не отвечает, панель покажет предупреждение.`,
-        how: "Выдели один фрейм или компонент, нажми «AI», настрой флажки в панели и нажми «Начать анализ»."
+        label: "QA",
+        getPreview(s) { const i = s === "emoji" ? "✨" : IC.custom; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">QA</span></div></div>`; },
+        description: `Выдели фрейм или компонент и нажми «QA» — откроется панель, а не сразу запустится анализ. В панели три тумблера:\n\n• <b>Скрытые элементы</b> — учитывать в анализе скрытые слои (выключено по умолчанию).\n• <b>Оставлять комментарии</b> — если включить, найденные замечания сразу проставятся комментариями прямо в Figma; выключено — только анализ, файл не меняется (выключено по умолчанию).\n• <b>Игнорировать itemSpacing</b> — не проверять отступы между элементами (включено по умолчанию).\n\nПосле «Начать анализ» открывается живой лог — находки появляются по одной, по мере того как агент их находит, а не всё сразу в конце. Клик по находке в списке (если у неё есть ссылка на объект) переводит фокус Figma на него.\n\nСсылку на файл плагин обычно определяет сам. Если не получилось (например в Desktop-приложении) — панель попросит вставить её вручную: скопируй через ⌘L «Скопировать ссылку на выделение», вставь в поле.\n\nПовторный клик по кнопке, пока панель открыта, закрывает её.\n\nТребует, чтобы локальный агент был запущен (см. agent/PLUGIN_INTEGRATION.md и start.command в его папке) — если он не отвечает, панель покажет предупреждение.`,
+        how: "Выдели один фрейм или компонент, нажми «QA», настрой тумблеры в панели и нажми «Начать анализ»."
       },
       {
         icon: IC.gear, emojiIcon: "⚙️",
@@ -1712,7 +1712,7 @@
         { icon: IC.arrowUp,   emojiIcon: "⬆️", command: "bringToFront", title: "На передний план (внутри родителя)" },
         { icon: IC.arrowDown, emojiIcon: "⬇️", command: "sendToBack",   title: "На задний план (внутри родителя)" },
       ]},
-      { icon: IC.custom, emojiIcon: "✨", label: "AI", command: "runAgent" },
+      { icon: IC.custom, emojiIcon: "✨", label: "QA", command: "runAgent" },
     ];
 
     let expandChkR = null, expandChkL = null;
@@ -1733,7 +1733,7 @@
     let agentEventSource = null;   // текущее SSE-соединение с агентом (null, если анализ не идёт)
     let agApplyState = null;       // ссылка на applyState() открытого тулбара — пересчитать высоту окна
     let agentCloseFn = null;       // закрывает панель AI, если она открыта (для др. панелей тулбара)
-    let agentBtnEl = null;         // сама кнопка "AI" на тулбаре — серая обычно, синяя пока панель открыта
+    let agentBtnEl = null;         // сама кнопка "QA" на тулбаре — серая обычно, синяя пока панель открыта
     let agentSourceParams = null;  // {fileKey, nodeId} или {url} — определяется при открытии панели, до нажатия "Начать анализ"
 
     const agPanel = document.getElementById("agentPanel");
@@ -2015,7 +2015,7 @@
       agLinkInput.value = "";
       agOptComment.checked = false;
       agOptHidden.checked = false;
-      agOptSpacing.checked = false;
+      agOptSpacing.checked = true;
       agOptions.style.display = "flex";
       agActionbar.style.display = "flex";
       agList.innerHTML = "";
