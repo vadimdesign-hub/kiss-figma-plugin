@@ -1788,27 +1788,49 @@
       if (agApplyState) agApplyState();
     }
 
-    function openAgentPanel(fileKey, nodeId, nodeName, comment) {
+    // figma.fileKey часто недоступен прямо в песочнице плагина — так же,
+    // как в "Скопировать ссылку" (requestCopyLink), достаём ключ файла из
+    // document.referrer и собираем полную ссылку на объект вручную
+    function buildFigmaUrlFromReferrer(nodeIdUrl) {
+      const match = document.referrer.match(/figma\.com\/(?:file|design)\/([A-Za-z0-9]+)/);
+      const fileKey = match ? match[1] : null;
+      if (!fileKey) return null;
+      return "https://www.figma.com/design/" + fileKey + "?node-id=" + nodeIdUrl;
+    }
+
+    function openAgentPanel(fileKey, nodeId, nodeIdUrl, nodeName, comment) {
       if (simCloseCustomize) simCloseCustomize();
       if (simReplaceOpen) closeSimReplacePanel();
       agentPanelOpen = true;
       agPanel.style.display = "flex";
       agScope.textContent = nodeName || "";
-      agStatus.textContent = "Идёт анализ...";
       agList.innerHTML = "";
       agFooter.textContent = "";
       if (agentBtnEl) agentBtnEl.classList.add("tool-btn-blue");
-      if (agApplyState) agApplyState();
 
-      if (agentEventSource) agentEventSource.close();
+      // Пробуем fileKey напрямую от Figma; если его нет — строим ссылку
+      // так же, как это уже делает "Скопировать ссылку на выделение"
       const params = new URLSearchParams({
-        fileKey: fileKey,
-        nodeId: nodeId,
         comment: comment ? "1" : "0",
         includeHidden: "0",
         ignoreItemSpacing: "0",
       });
+      if (fileKey) {
+        params.set("fileKey", fileKey);
+        params.set("nodeId", nodeId);
+      } else {
+        const url = buildFigmaUrlFromReferrer(nodeIdUrl);
+        if (!url) {
+          agStatus.textContent = "⚠️ Не удалось определить ссылку на файл. Попробуй: выдели объект, нажми ⌘L «Скопировать ссылку», и если ссылка тоже не копируется — значит дело не в плагине, а в том, как открыт файл.";
+          if (agApplyState) agApplyState();
+          return;
+        }
+        params.set("url", url);
+      }
+      agStatus.textContent = "Идёт анализ...";
+      if (agApplyState) agApplyState();
 
+      if (agentEventSource) agentEventSource.close();
       let es;
       try {
         es = new EventSource(`http://localhost:5000/analyze_stream?${params}`);
@@ -2077,7 +2099,7 @@
       }
 
       if (msg.type === "agent-target") {
-        openAgentPanel(msg.fileKey, msg.nodeId, msg.nodeName, msg.comment);
+        openAgentPanel(msg.fileKey, msg.nodeId, msg.nodeIdUrl, msg.nodeName, msg.comment);
         return;
       }
 

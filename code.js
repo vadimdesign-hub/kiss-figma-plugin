@@ -2935,14 +2935,16 @@ function runAgentOnSelection(comment) {
     figma.notify("⚠️ Сначала выдели фрейм или компонент");
     return;
   }
-  if (!figma.fileKey) {
-    figma.notify("⚠️ Не удалось определить файл — работает только в обычном сохранённом файле Figma");
-    return;
-  }
+  // figma.fileKey часто недоступен (например для файлов, открытых не через
+  // обычную ссылку figma.com) — как и в "Скопировать ссылку", в этом случае
+  // отдаём nodeId в формате ссылки, а ui.html сам достанет fileKey из
+  // document.referrer и соберёт полную ссылку на объект
+  const nodeIdUrl = node.id.replace(":", "-");
   figma.ui.postMessage({
     type: "agent-target",
-    fileKey: figma.fileKey,
+    fileKey: figma.fileKey || null,
     nodeId: node.id,
+    nodeIdUrl,
     nodeName: node.name,
     comment: !!comment,
   });
