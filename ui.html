@@ -935,6 +935,28 @@
       padding: 7px 8px;
     }
     .ag-link-input:focus { outline: none; border-color: var(--btn-blue-fg); }
+    .ag-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px;
+      border-bottom: 1px solid var(--tray-border);
+    }
+    .ag-opt {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--label-color);
+      cursor: pointer;
+    }
+    .ag-opt input[type="checkbox"] { cursor: pointer; }
+    .ag-actionbar {
+      display: flex;
+      justify-content: flex-end;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--tray-border);
+    }
     .ag-list {
       max-height: 160px;
       overflow-y: auto;
@@ -1299,7 +1321,14 @@
       <div class="ag-status" id="agStatus"></div>
       <div class="ag-link-form" id="agLinkForm">
         <input type="text" class="ag-link-input" id="agLinkInput" placeholder="Вставь ссылку на объект (⌘L → ⌘V)" />
-        <button class="sr-btn primary sm" id="agLinkGo" type="button">Начать анализ</button>
+      </div>
+      <div class="ag-options" id="agOptions">
+        <label class="ag-opt"><input type="checkbox" id="agOptComment" /> Проставлять комментарии</label>
+        <label class="ag-opt"><input type="checkbox" id="agOptHidden" /> Включая скрытые элементы</label>
+        <label class="ag-opt"><input type="checkbox" id="agOptSpacing" /> Игнорировать отступы между элементами</label>
+      </div>
+      <div class="ag-actionbar" id="agActionbar">
+        <button class="sr-btn primary" id="agStart" type="button">Начать анализ</button>
       </div>
       <div class="ag-list" id="agList"></div>
       <div class="ag-footer" id="agFooter"></div>
@@ -1557,9 +1586,9 @@
       {
         icon: IC.custom, emojiIcon: "✨",
         label: "AI",
-        getPreview(s) { const i = s === "emoji" ? "✨" : IC.custom; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">AI</span><div class="bp-check" style="top:4px;right:4px"></div></div></div>`; },
-        description: `Отправляет выделенный фрейм или компонент локальному AI-агенту (Python-скрипт, работает на твоём компьютере на localhost:5000) на анализ дизайна. Открывается панель с живым логом — находки появляются по одной, по мере того как агент их находит, а не всё сразу в конце.\n\nЧекбокс на кнопке — <b>«Проставлять комментарии»</b>: выключен (по умолчанию) — только анализ, ничего не меняется в файле; включён — агент сразу проставит найденные замечания комментариями прямо в Figma. Клик по находке в списке (если у неё есть ссылка на объект) переводит фокус Figma на него.\n\nСсылку на файл плагин обычно определяет сам. Если не получилось (например в Desktop-приложении) — панель попросит вставить её вручную: выдели объект, скопируй ссылку через ⌘L «Скопировать ссылку на выделение», вставь в поле и нажми «Начать анализ».\n\nПовторный клик по кнопке, пока панель открыта, закрывает её.\n\nТребует, чтобы локальный агент был запущен (см. agent/PLUGIN_INTEGRATION.md и start.command в его папке) — если он не отвечает, панель покажет предупреждение.`,
-        how: "Выдели один фрейм или компонент, при необходимости отметь чекбокс «Проставлять комментарии», и нажми «AI»."
+        getPreview(s) { const i = s === "emoji" ? "✨" : IC.custom; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">AI</span></div></div>`; },
+        description: `Выдели фрейм или компонент и нажми «AI» — откроется панель, а не сразу запустится анализ. В панели три флажка (все выключены по умолчанию):\n\n• <b>Проставлять комментарии</b> — если включить, найденные замечания сразу проставятся комментариями прямо в Figma; выключено — только анализ, файл не меняется.\n• <b>Включая скрытые элементы</b> — учитывать в анализе скрытые слои.\n• <b>Игнорировать отступы между элементами</b> — не проверять расстояния между объектами.\n\nПосле «Начать анализ» открывается живой лог — находки появляются по одной, по мере того как агент их находит, а не всё сразу в конце. Клик по находке в списке (если у неё есть ссылка на объект) переводит фокус Figma на него.\n\nСсылку на файл плагин обычно определяет сам. Если не получилось (например в Desktop-приложении) — панель попросит вставить её вручную: скопируй через ⌘L «Скопировать ссылку на выделение», вставь в поле.\n\nПовторный клик по кнопке, пока панель открыта, закрывает её.\n\nТребует, чтобы локальный агент был запущен (см. agent/PLUGIN_INTEGRATION.md и start.command в его папке) — если он не отвечает, панель покажет предупреждение.`,
+        how: "Выдели один фрейм или компонент, нажми «AI», настрой флажки в панели и нажми «Начать анализ»."
       },
       {
         icon: IC.gear, emojiIcon: "⚙️",
@@ -1633,7 +1662,7 @@
         { icon: IC.arrowUp,   emojiIcon: "⬆️", command: "bringToFront", title: "На передний план (внутри родителя)" },
         { icon: IC.arrowDown, emojiIcon: "⬇️", command: "sendToBack",   title: "На задний план (внутри родителя)" },
       ]},
-      { icon: IC.custom, emojiIcon: "✨", label: "AI", command: "runAgent", hasCommentCheck: true },
+      { icon: IC.custom, emojiIcon: "✨", label: "AI", command: "runAgent" },
     ];
 
     let expandChkR = null, expandChkL = null;
@@ -1655,14 +1684,19 @@
     let agApplyState = null;       // ссылка на applyState() открытого тулбара — пересчитать высоту окна
     let agentCloseFn = null;       // закрывает панель AI, если она открыта (для др. панелей тулбара)
     let agentBtnEl = null;         // сама кнопка "AI" на тулбаре — серая обычно, синяя пока панель открыта
-    let agLinkPendingComment = false; // чекбокс "комментарии", запомненный на время ручного ввода ссылки
+    let agentSourceParams = null;  // {fileKey, nodeId} или {url} — определяется при открытии панели, до нажатия "Начать анализ"
 
     const agPanel = document.getElementById("agentPanel");
     const agScope = document.getElementById("agScope");
     const agStatus = document.getElementById("agStatus");
     const agLinkForm = document.getElementById("agLinkForm");
     const agLinkInput = document.getElementById("agLinkInput");
-    const agLinkGo = document.getElementById("agLinkGo");
+    const agOptions = document.getElementById("agOptions");
+    const agOptComment = document.getElementById("agOptComment");
+    const agOptHidden = document.getElementById("agOptHidden");
+    const agOptSpacing = document.getElementById("agOptSpacing");
+    const agActionbar = document.getElementById("agActionbar");
+    const agStart = document.getElementById("agStart");
     const agList = document.getElementById("agList");
     const agFooter = document.getElementById("agFooter");
 
@@ -1827,8 +1861,12 @@
     // Запускает сам SSE-поток к агенту. sourceParams — либо {fileKey, nodeId},
     // либо {url} (готовая ссылка на Figma-объект, введённая вручную или
     // построенная автоматически) — сервер поддерживает оба варианта одинаково.
-    function startAgentStream(sourceParams, comment, nodeName) {
+    // opts — {comment, includeHidden, ignoreItemSpacing}, все три флажка
+    // с панели, все по умолчанию выключены.
+    function startAgentStream(sourceParams, opts, nodeName) {
       agLinkForm.style.display = "none";
+      agOptions.style.display = "none";
+      agActionbar.style.display = "none";
       agStatus.textContent = "Идёт анализ...";
       agList.innerHTML = "";
       agFooter.textContent = "";
@@ -1836,9 +1874,9 @@
 
       if (agentEventSource) agentEventSource.close();
       const params = new URLSearchParams(Object.assign({
-        comment: comment ? "1" : "0",
-        includeHidden: "0",
-        ignoreItemSpacing: "0",
+        comment: opts.comment ? "1" : "0",
+        includeHidden: opts.includeHidden ? "1" : "0",
+        ignoreItemSpacing: opts.ignoreItemSpacing ? "1" : "0",
       }, sourceParams));
 
       let es;
@@ -1898,23 +1936,38 @@
       };
     }
 
-    agLinkGo.addEventListener("click", () => {
-      const url = agLinkInput.value.trim();
-      if (!url) return;
-      startAgentStream({ url }, agLinkPendingComment, agScope.textContent);
+    agStart.addEventListener("click", () => {
+      let sourceParams = agentSourceParams;
+      if (!sourceParams) {
+        const url = agLinkInput.value.trim();
+        if (!url) {
+          agStatus.textContent = "⚠️ Сначала вставь ссылку на объект";
+          return;
+        }
+        sourceParams = { url };
+      }
+      startAgentStream(sourceParams, {
+        comment: agOptComment.checked,
+        includeHidden: agOptHidden.checked,
+        ignoreItemSpacing: agOptSpacing.checked,
+      }, agScope.textContent);
     });
     agLinkInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") agLinkGo.click();
+      if (e.key === "Enter") agStart.click();
     });
 
-    function openAgentPanel(fileKey, nodeId, nodeIdUrl, nodeName, comment) {
+    function openAgentPanel(fileKey, nodeId, nodeIdUrl, nodeName) {
       if (simCloseCustomize) simCloseCustomize();
       if (simReplaceOpen) closeSimReplacePanel();
       agentPanelOpen = true;
       agPanel.style.display = "flex";
       agScope.textContent = nodeName || "";
-      agLinkForm.style.display = "none";
       agLinkInput.value = "";
+      agOptComment.checked = false;
+      agOptHidden.checked = false;
+      agOptSpacing.checked = false;
+      agOptions.style.display = "flex";
+      agActionbar.style.display = "flex";
       agList.innerHTML = "";
       agFooter.textContent = "";
       if (agentBtnEl) agentBtnEl.classList.add("tool-btn-blue");
@@ -1922,20 +1975,24 @@
       // Пробуем fileKey напрямую от Figma; если его нет — пробуем построить
       // ссылку так же, как это делает "Скопировать ссылку на выделение"
       // (через document.referrer); если и это не вышло — просим вставить
-      // ссылку вручную (⌘L «Скопировать ссылку» всегда работает нативно)
+      // ссылку вручную (⌘L «Скопировать ссылку» всегда работает нативно).
+      // Сам запуск анализа — только по нажатию "Начать анализ".
       if (fileKey) {
-        startAgentStream({ fileKey, nodeId }, comment, nodeName);
-        return;
+        agentSourceParams = { fileKey, nodeId };
+        agLinkForm.style.display = "none";
+        agStatus.textContent = "Настрой параметры и нажми «Начать анализ»";
+      } else {
+        const autoUrl = buildFigmaUrlFromReferrer(nodeIdUrl);
+        if (autoUrl) {
+          agentSourceParams = { url: autoUrl };
+          agLinkForm.style.display = "none";
+          agStatus.textContent = "Настрой параметры и нажми «Начать анализ»";
+        } else {
+          agentSourceParams = null;
+          agLinkForm.style.display = "flex";
+          agStatus.textContent = "Не удалось определить ссылку автоматически — вставь её (⌘L «Скопировать ссылку на выделение»), настрой параметры и нажми «Начать анализ»";
+        }
       }
-      const autoUrl = buildFigmaUrlFromReferrer(nodeIdUrl);
-      if (autoUrl) {
-        startAgentStream({ url: autoUrl }, comment, nodeName);
-        return;
-      }
-
-      agLinkPendingComment = comment;
-      agStatus.textContent = "Не удалось определить ссылку автоматически — скопируй её (⌘L «Скопировать ссылку на выделение») и вставь сюда:";
-      agLinkForm.style.display = "flex";
       if (agApplyState) agApplyState();
     }
 
@@ -2150,7 +2207,7 @@
       }
 
       if (msg.type === "agent-target") {
-        openAgentPanel(msg.fileKey, msg.nodeId, msg.nodeIdUrl, msg.nodeName, msg.comment);
+        openAgentPanel(msg.fileKey, msg.nodeId, msg.nodeIdUrl, msg.nodeName);
         return;
       }
 
@@ -2487,20 +2544,14 @@
           btn.addEventListener("click", () => {
             parent.postMessage({ pluginMessage: { type: "run", command: t.command, compact: pchk.checked } }, "*");
           });
-        } else if (t.hasCommentCheck) {
-          const achk = document.createElement("input");
-          achk.type = "checkbox";
-          achk.className = "btn-kbd-check";
-          achk.title = "Проставлять комментарии в Figma (иначе — только анализ, без комментариев)";
-          achk.addEventListener("click", e => e.stopPropagation());
-          btn.appendChild(achk);
+        } else if (t.command === "runAgent") {
           btn.addEventListener("click", () => {
             // Повторный клик, пока панель уже открыта, — просто закрывает её
             if (agentPanelOpen) {
               closeAgentPanel();
               return;
             }
-            parent.postMessage({ pluginMessage: { type: "run", command: t.command, comment: achk.checked } }, "*");
+            parent.postMessage({ pluginMessage: { type: "run", command: t.command } }, "*");
           });
         } else {
           btn.addEventListener("click", () => {

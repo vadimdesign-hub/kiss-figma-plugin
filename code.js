@@ -328,7 +328,7 @@ figma.ui.onmessage = async (msg) => {
     case "makeComponent":    makeComponents(); break;
     case "bringToFront":     bringSelectionToFront(); break;
     case "sendToBack":       sendSelectionToBack(); break;
-    case "runAgent":         runAgentOnSelection(msg.comment); break;
+    case "runAgent":         runAgentOnSelection(); break;
   }
 };
 
@@ -2929,7 +2929,7 @@ function sendSelectionToBack() { moveSelectionWithinParent(false); }
 // localhost:5000) на анализ. Сам запрос к агенту (SSE) делает ui.html —
 // у main-песочницы нет доступа к сети, только к figma.*. См. agent/PLUGIN_INTEGRATION.md.
 // ============================
-function runAgentOnSelection(comment) {
+function runAgentOnSelection() {
   const node = figma.currentPage.selection[0];
   if (!node) {
     figma.notify("⚠️ Сначала выдели фрейм или компонент");
@@ -2938,7 +2938,9 @@ function runAgentOnSelection(comment) {
   // figma.fileKey часто недоступен (например для файлов, открытых не через
   // обычную ссылку figma.com) — как и в "Скопировать ссылку", в этом случае
   // отдаём nodeId в формате ссылки, а ui.html сам достанет fileKey из
-  // document.referrer и соберёт полную ссылку на объект
+  // document.referrer и соберёт полную ссылку на объект.
+  // Комментарии/скрытые элементы/отступы — настраиваются уже в самой панели,
+  // перед нажатием "Начать анализ", а не на этой кнопке.
   const nodeIdUrl = node.id.replace(":", "-");
   figma.ui.postMessage({
     type: "agent-target",
@@ -2946,6 +2948,5 @@ function runAgentOnSelection(comment) {
     nodeId: node.id,
     nodeIdUrl,
     nodeName: node.name,
-    comment: !!comment,
   });
 }
