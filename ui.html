@@ -917,6 +917,24 @@
       color: var(--label-color);
       border-bottom: 1px solid var(--tray-border);
     }
+    .ag-link-form {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--tray-border);
+    }
+    .ag-link-input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid var(--tray-border);
+      border-radius: 5px;
+      background: var(--tb-bg);
+      color: var(--label-color);
+      font-size: 11px;
+      padding: 7px 8px;
+    }
+    .ag-link-input:focus { outline: none; border-color: var(--btn-blue-fg); }
     .ag-list {
       max-height: 160px;
       overflow-y: auto;
@@ -1279,6 +1297,10 @@
         <span class="ag-scope" id="agScope"></span>
       </div>
       <div class="ag-status" id="agStatus"></div>
+      <div class="ag-link-form" id="agLinkForm">
+        <input type="text" class="ag-link-input" id="agLinkInput" placeholder="Вставь ссылку на объект (⌘L → ⌘V)" />
+        <button class="sr-btn primary sm" id="agLinkGo" type="button">Начать анализ</button>
+      </div>
       <div class="ag-list" id="agList"></div>
       <div class="ag-footer" id="agFooter"></div>
     </div>
@@ -1536,7 +1558,7 @@
         icon: IC.custom, emojiIcon: "✨",
         label: "AI",
         getPreview(s) { const i = s === "emoji" ? "✨" : IC.custom; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">AI</span><div class="bp-check" style="top:4px;right:4px"></div></div></div>`; },
-        description: `Отправляет выделенный фрейм или компонент локальному AI-агенту (Python-скрипт, работает на твоём компьютере на localhost:5000) на анализ дизайна. Открывается панель с живым логом — находки появляются по одной, по мере того как агент их находит, а не всё сразу в конце.\n\nЧекбокс на кнопке — <b>«Проставлять комментарии»</b>: выключен (по умолчанию) — только анализ, ничего не меняется в файле; включён — агент сразу проставит найденные замечания комментариями прямо в Figma. Клик по находке в списке (если у неё есть ссылка на объект) переводит фокус Figma на него.\n\nПовторный клик по кнопке, пока панель открыта, закрывает её.\n\nТребует, чтобы локальный агент был запущен (см. agent/PLUGIN_INTEGRATION.md и start.command в его папке) — если он не отвечает, панель покажет предупреждение.`,
+        description: `Отправляет выделенный фрейм или компонент локальному AI-агенту (Python-скрипт, работает на твоём компьютере на localhost:5000) на анализ дизайна. Открывается панель с живым логом — находки появляются по одной, по мере того как агент их находит, а не всё сразу в конце.\n\nЧекбокс на кнопке — <b>«Проставлять комментарии»</b>: выключен (по умолчанию) — только анализ, ничего не меняется в файле; включён — агент сразу проставит найденные замечания комментариями прямо в Figma. Клик по находке в списке (если у неё есть ссылка на объект) переводит фокус Figma на него.\n\nСсылку на файл плагин обычно определяет сам. Если не получилось (например в Desktop-приложении) — панель попросит вставить её вручную: выдели объект, скопируй ссылку через ⌘L «Скопировать ссылку на выделение», вставь в поле и нажми «Начать анализ».\n\nПовторный клик по кнопке, пока панель открыта, закрывает её.\n\nТребует, чтобы локальный агент был запущен (см. agent/PLUGIN_INTEGRATION.md и start.command в его папке) — если он не отвечает, панель покажет предупреждение.`,
         how: "Выдели один фрейм или компонент, при необходимости отметь чекбокс «Проставлять комментарии», и нажми «AI»."
       },
       {
@@ -1633,10 +1655,14 @@
     let agApplyState = null;       // ссылка на applyState() открытого тулбара — пересчитать высоту окна
     let agentCloseFn = null;       // закрывает панель AI, если она открыта (для др. панелей тулбара)
     let agentBtnEl = null;         // сама кнопка "AI" на тулбаре — серая обычно, синяя пока панель открыта
+    let agLinkPendingComment = false; // чекбокс "комментарии", запомненный на время ручного ввода ссылки
 
     const agPanel = document.getElementById("agentPanel");
     const agScope = document.getElementById("agScope");
     const agStatus = document.getElementById("agStatus");
+    const agLinkForm = document.getElementById("agLinkForm");
+    const agLinkInput = document.getElementById("agLinkInput");
+    const agLinkGo = document.getElementById("agLinkGo");
     const agList = document.getElementById("agList");
     const agFooter = document.getElementById("agFooter");
 
@@ -1798,39 +1824,23 @@
       return "https://www.figma.com/design/" + fileKey + "?node-id=" + nodeIdUrl;
     }
 
-    function openAgentPanel(fileKey, nodeId, nodeIdUrl, nodeName, comment) {
-      if (simCloseCustomize) simCloseCustomize();
-      if (simReplaceOpen) closeSimReplacePanel();
-      agentPanelOpen = true;
-      agPanel.style.display = "flex";
-      agScope.textContent = nodeName || "";
+    // Запускает сам SSE-поток к агенту. sourceParams — либо {fileKey, nodeId},
+    // либо {url} (готовая ссылка на Figma-объект, введённая вручную или
+    // построенная автоматически) — сервер поддерживает оба варианта одинаково.
+    function startAgentStream(sourceParams, comment, nodeName) {
+      agLinkForm.style.display = "none";
+      agStatus.textContent = "Идёт анализ...";
       agList.innerHTML = "";
       agFooter.textContent = "";
-      if (agentBtnEl) agentBtnEl.classList.add("tool-btn-blue");
-
-      // Пробуем fileKey напрямую от Figma; если его нет — строим ссылку
-      // так же, как это уже делает "Скопировать ссылку на выделение"
-      const params = new URLSearchParams({
-        comment: comment ? "1" : "0",
-        includeHidden: "0",
-        ignoreItemSpacing: "0",
-      });
-      if (fileKey) {
-        params.set("fileKey", fileKey);
-        params.set("nodeId", nodeId);
-      } else {
-        const url = buildFigmaUrlFromReferrer(nodeIdUrl);
-        if (!url) {
-          agStatus.textContent = "⚠️ Не удалось определить ссылку на файл. Попробуй: выдели объект, нажми ⌘L «Скопировать ссылку», и если ссылка тоже не копируется — значит дело не в плагине, а в том, как открыт файл.";
-          if (agApplyState) agApplyState();
-          return;
-        }
-        params.set("url", url);
-      }
-      agStatus.textContent = "Идёт анализ...";
       if (agApplyState) agApplyState();
 
       if (agentEventSource) agentEventSource.close();
+      const params = new URLSearchParams(Object.assign({
+        comment: comment ? "1" : "0",
+        includeHidden: "0",
+        ignoreItemSpacing: "0",
+      }, sourceParams));
+
       let es;
       try {
         es = new EventSource(`http://localhost:5000/analyze_stream?${params}`);
@@ -1886,6 +1896,47 @@
         agentEventSource = null;
         if (agApplyState) agApplyState();
       };
+    }
+
+    agLinkGo.addEventListener("click", () => {
+      const url = agLinkInput.value.trim();
+      if (!url) return;
+      startAgentStream({ url }, agLinkPendingComment, agScope.textContent);
+    });
+    agLinkInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") agLinkGo.click();
+    });
+
+    function openAgentPanel(fileKey, nodeId, nodeIdUrl, nodeName, comment) {
+      if (simCloseCustomize) simCloseCustomize();
+      if (simReplaceOpen) closeSimReplacePanel();
+      agentPanelOpen = true;
+      agPanel.style.display = "flex";
+      agScope.textContent = nodeName || "";
+      agLinkForm.style.display = "none";
+      agLinkInput.value = "";
+      agList.innerHTML = "";
+      agFooter.textContent = "";
+      if (agentBtnEl) agentBtnEl.classList.add("tool-btn-blue");
+
+      // Пробуем fileKey напрямую от Figma; если его нет — пробуем построить
+      // ссылку так же, как это делает "Скопировать ссылку на выделение"
+      // (через document.referrer); если и это не вышло — просим вставить
+      // ссылку вручную (⌘L «Скопировать ссылку» всегда работает нативно)
+      if (fileKey) {
+        startAgentStream({ fileKey, nodeId }, comment, nodeName);
+        return;
+      }
+      const autoUrl = buildFigmaUrlFromReferrer(nodeIdUrl);
+      if (autoUrl) {
+        startAgentStream({ url: autoUrl }, comment, nodeName);
+        return;
+      }
+
+      agLinkPendingComment = comment;
+      agStatus.textContent = "Не удалось определить ссылку автоматически — скопируй её (⌘L «Скопировать ссылку на выделение») и вставь сюда:";
+      agLinkForm.style.display = "flex";
+      if (agApplyState) agApplyState();
     }
 
     // Ищем следующий незаменённый пункт после from, с переходом по кругу
