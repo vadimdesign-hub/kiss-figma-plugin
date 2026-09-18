@@ -937,20 +937,61 @@
     .ag-link-input:focus { outline: none; border-color: var(--btn-blue-fg); }
     .ag-options {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 8px 10px;
       border-bottom: 1px solid var(--tray-border);
     }
     .ag-opt {
       display: flex;
       align-items: center;
-      gap: 7px;
-      font-size: 12px;
+      gap: 6px;
+      font-size: 11px;
       color: var(--label-color);
       cursor: pointer;
+      white-space: nowrap;
     }
-    .ag-opt input[type="checkbox"] { cursor: pointer; }
+    .ag-opt-label { white-space: nowrap; }
+    .ag-switch {
+      position: relative;
+      display: inline-flex;
+      flex-shrink: 0;
+      width: 26px;
+      height: 15px;
+    }
+    .ag-switch-input {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .ag-switch-track {
+      position: absolute;
+      inset: 0;
+      background: var(--btn-bg);
+      border: 1px solid var(--tray-border);
+      border-radius: 999px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .ag-switch-track::before {
+      content: "";
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      transition: transform 0.15s;
+    }
+    .ag-switch-input:checked + .ag-switch-track {
+      background: var(--btn-blue-fg);
+      border-color: var(--btn-blue-fg);
+    }
+    .ag-switch-input:checked + .ag-switch-track::before { transform: translateX(11px); }
     .ag-actionbar {
       display: flex;
       justify-content: flex-end;
@@ -1323,9 +1364,18 @@
         <input type="text" class="ag-link-input" id="agLinkInput" placeholder="Вставь ссылку на объект (⌘L → ⌘V)" />
       </div>
       <div class="ag-options" id="agOptions">
-        <label class="ag-opt"><input type="checkbox" id="agOptComment" /> Проставлять комментарии</label>
-        <label class="ag-opt"><input type="checkbox" id="agOptHidden" /> Включая скрытые элементы</label>
-        <label class="ag-opt"><input type="checkbox" id="agOptSpacing" /> Игнорировать отступы между элементами</label>
+        <label class="ag-opt" title="Скрытые элементы — учитывать в анализе скрытые слои">
+          <span class="ag-switch"><input type="checkbox" id="agOptHidden" class="ag-switch-input" /><span class="ag-switch-track"></span></span>
+          <span class="ag-opt-label">Скрытые элементы</span>
+        </label>
+        <label class="ag-opt" title="Оставлять комментарии — сразу проставить найденные замечания в Figma">
+          <span class="ag-switch"><input type="checkbox" id="agOptComment" class="ag-switch-input" /><span class="ag-switch-track"></span></span>
+          <span class="ag-opt-label">Оставлять комментарии</span>
+        </label>
+        <label class="ag-opt" title="Игнорировать itemSpacing — не проверять отступы между элементами">
+          <span class="ag-switch"><input type="checkbox" id="agOptSpacing" class="ag-switch-input" /><span class="ag-switch-track"></span></span>
+          <span class="ag-opt-label">Игнорировать itemSpacing</span>
+        </label>
       </div>
       <div class="ag-actionbar" id="agActionbar">
         <button class="sr-btn primary" id="agStart" type="button">Начать анализ</button>
