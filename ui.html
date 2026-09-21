@@ -1124,35 +1124,28 @@
       background: var(--check-bg);
       transition: border-color 0.15s, background 0.15s;
     }
-    /* Маленькая кнопка-пилюля на кнопке "Архив" — появляется после того,
-       как что-то реально перенесли (стрелка вправо → ведёт к перенесённому),
-       после перехода превращается в "Назад" (возврат туда, откуда пришли) */
+    /* Круглая кнопка-переход на кнопке "Архив" — появляется после того, как
+       что-то реально перенесли (шеврон вправо ведёт к перенесённому), после
+       перехода превращается в шеврон влево — "Назад" (без подписи) */
     .archive-jump-btn {
-      --svg-stroke: var(--label-color);
       display: none;
       position: absolute;
       top: 4px;
       right: 4px;
-      min-width: 20px;
-      height: 16px;
-      padding: 0 6px;
+      width: 20px;
+      height: 20px;
+      padding: 0;
       border: 1px solid var(--tray-border);
-      border-radius: 999px;
+      border-radius: 50%;
       background: var(--btn-hover);
-      color: var(--label-color);
       align-items: center;
       justify-content: center;
-      gap: 3px;
       cursor: pointer;
-      font-size: 9px;
-      font-weight: 600;
-      line-height: 1;
-      white-space: nowrap;
       z-index: 1;
       transition: background 0.12s;
     }
     .archive-jump-btn:hover { background: var(--btn-active); }
-    .archive-jump-btn svg { width: 9px; height: 9px; flex-shrink: 0; }
+    .archive-jump-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
     .btn-check-row {
       position: absolute;
       display: flex;
@@ -1510,7 +1503,6 @@
       arrowUp:   SVG('<path d="M9 15V4"/><path d="M4.5 8.5L9 4l4.5 4.5"/>'),
       arrowDown: SVG('<path d="M9 3v11"/><path d="M4.5 9.5L9 14l4.5-4.5"/>'),
       archiveBox: SVG('<rect x="2" y="3" width="14" height="4" rx="1"/><path d="M3 7v6.5A1.5 1.5 0 004.5 15h9a1.5 1.5 0 001.5-1.5V7"/><line x1="7" y1="10" x2="11" y2="10"/>'),
-      jumpTo:     SVG('<path d="M3 9h11"/><path d="M9 5l4 4-4 4"/>'),
     };
     const menu = [
       {
@@ -1675,7 +1667,7 @@
         icon: IC.archiveBox, emojiIcon: "🗄️",
         label: "Архив",
         getPreview(s) { const i = s === "emoji" ? "🗄️" : IC.archiveBox; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Архив</span></div></div>`; },
-        description: `Выдели что угодно — секции, фреймы, отдельные объекты, в любом количестве — и нажми «Архив». Плагин найдёт в файле страницу с именем <b>Archive</b> или <b>Архив</b> (без учёта регистра, опечатка «Arhive» тоже подойдёт) и перенесёт туда выделенное.\n\nЕсли выделены и родитель, и что-то внутри него (например секция и фрейм в ней) — переносится только родитель целиком, дублирования не будет.\n\nВставляется всё разом, одним блоком, сохраняя расположение объектов друг относительно друга — но целиком снизу от всего, что уже есть на странице архива, чтобы точно ни с чем не пересечься.\n\nПосле переноса на кнопке появляется маленькая серая пилюля со стрелкой → — клик по ней переключает на страницу архива и сразу выделяет и приближает то, что только что перенесли. После перехода пилюля меняется на «Назад» — клик по ней возвращает обратно на ту же страницу и туда же во вьюпорте, откуда переходили (не выделение, просто то же место). После возврата пилюля исчезает — до следующего переноса в архив.`,
+        description: `Выдели что угодно — секции, фреймы, отдельные объекты, в любом количестве — и нажми «Архив». Плагин найдёт в файле страницу с именем <b>Archive</b> или <b>Архив</b> (без учёта регистра, опечатка «Arhive» тоже подойдёт) и перенесёт туда выделенное.\n\nЕсли выделены и родитель, и что-то внутри него (например секция и фрейм в ней) — переносится только родитель целиком, дублирования не будет.\n\nВставляется всё разом, одним блоком, сохраняя расположение объектов друг относительно друга — но целиком снизу от всего, что уже есть на странице архива, чтобы точно ни с чем не пересечься.\n\nПосле переноса на кнопке появляется маленькая круглая серая кнопка со стрелкой вправо — клик по ней переключает на страницу архива и сразу выделяет и приближает то, что только что перенесли. После перехода стрелка разворачивается влево (это и означает «назад», подписи нет) — клик по ней возвращает обратно на ту же страницу и туда же во вьюпорте, откуда переходили (не выделение, просто то же место). После возврата кнопка исчезает — до следующего переноса в архив.`,
         how: "Выдели что нужно убрать в архив и нажми «Архив». Нужна страница с именем Archive/Архив в файле — если её нет, появится уведомление."
       },
       {
@@ -1776,9 +1768,12 @@
 
     // ===== Архив — переносит выделение на страницу Archive/Архив =====
     let archiveBtnEl = null;       // сама кнопка "Архив" на тулбаре
-    let archiveJumpBtnEl = null;   // маленькая кнопка-пилюля на ней (стрелка → / "Назад")
+    let archiveJumpBtnEl = null;   // круглая кнопка-переход на ней (шеврон вправо / влево)
     let archivePillState = "hidden"; // "hidden" | "jump" | "back"
-    let archiveGetIcon = null;       // ссылка на getIcon() открытого тулбара — учитывает SVG/Emoji
+
+    // Жирный шеврон без хвостовой линии — просто "галочка"-уголок, без подписи.
+    // Вправо — "перейти", влево ("назад") — тот же шеврон, зеркально.
+    const ARCHIVE_CHEVRON = dir => `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--label-color)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="${dir > 0 ? "M5 3l4 4-4 4" : "M9 3L5 7l4 4"}"/></svg>`;
 
     function renderArchivePill() {
       if (!archiveJumpBtnEl) return;
@@ -1789,11 +1784,10 @@
       archiveJumpBtnEl.style.display = "flex";
       if (archivePillState === "jump") {
         archiveJumpBtnEl.title = "Перейти к перенесённому в архив";
-        const t = { icon: IC.jumpTo, emojiIcon: "→" };
-        archiveJumpBtnEl.innerHTML = archiveGetIcon ? archiveGetIcon(t) : t.icon;
+        archiveJumpBtnEl.innerHTML = ARCHIVE_CHEVRON(1);
       } else {
         archiveJumpBtnEl.title = "Вернуться назад";
-        archiveJumpBtnEl.textContent = "Назад";
+        archiveJumpBtnEl.innerHTML = ARCHIVE_CHEVRON(-1);
       }
     }
     let agentSourceParams = null;  // {fileKey, nodeId} или {url} — определяется при открытии панели, до нажатия "Начать анализ"
@@ -2802,7 +2796,6 @@
 
       simApplyState = applyState;
       agApplyState = applyState;
-      archiveGetIcon = getIcon;
       simCloseCustomize = function () {
         if (!customizeMode) return;
         customizeMode = false;
