@@ -8,6 +8,9 @@ let prevSelectionIds = new Set();
 let selectionOrderIds = []; // порядок, в котором объекты попали в текущее выделение (для "Переименовать")
 let lastArchivedIds = [];      // id объектов, перенесённых последним "В архив" — для кнопки-перехода
 let lastArchivePageId = null;  // id страницы архива, куда их перенесли
+let archiveReturnPageId = null;          // страница, с которой перешли в архив (для кнопки "Назад")
+let archiveReturnViewportCenter = null;  // и её вьюпорт — центр...
+let archiveReturnViewportZoom = null;    // ...и зум, чтобы вернуться ровно туда же
 function tryClose() { if (!keepAlive) figma.closePlugin(); }
 
 function checkFrameSelected() {
@@ -333,6 +336,7 @@ figma.ui.onmessage = async (msg) => {
     case "runAgent":         runAgentOnSelection(); break;
     case "archiveSelection": archiveSelection(); break;
     case "focusArchive":     focusArchive(); break;
+    case "focusArchiveBack": focusArchiveBack(); break;
   }
 };
 
@@ -3044,7 +3048,9 @@ function archiveSelection() {
   tryClose();
 }
 
-// Переходит на страницу архива и фокусирует последний перенесённый набор
+// Переходит на страницу архива и фокусирует последний перенесённый набор.
+// Запоминает, откуда пришли (страницу и вьюпорт), чтобы кнопка "Назад"
+// могла вернуть ровно туда же.
 function focusArchive() {
   if (!lastArchivePageId || lastArchivedIds.length === 0) {
     figma.notify("⚠️ В этой сессии ещё ничего не переносили в архив");
@@ -3060,7 +3066,35 @@ function focusArchive() {
     figma.notify("⚠️ Перенесённые объекты не найдены — возможно, их удалили");
     return;
   }
+
+  archiveReturnPageId = figma.currentPage.id;
+  archiveReturnViewportCenter = { x: figma.viewport.center.x, y: figma.viewport.center.y };
+  archiveReturnViewportZoom = figma.viewport.zoom;
+
   figma.currentPage = page;
   figma.currentPage.selection = nodes;
   figma.viewport.scrollAndZoomIntoView(nodes);
+  figma.ui.postMessage({ type: "archiveFocused" });
+}
+
+// "Назад" — возвращает туда, откуда переходили в архив (просто страница +
+// вьюпорт, без попытки восстановить прошлое выделение — самих объектов
+// на исходном месте уже может не быть)
+function focusArchiveBack() {
+  if (!archiveReturnPageId) {
+    figma.notify("⚠️ Некуда возвращаться");
+    return;
+  }
+  const page = figma.getNodeById(archiveReturnPageId);
+  if (page && page.type === "PAGE") {
+    figma.currentPage = page;
+    if (archiveReturnViewportCenter) figma.viewport.center = archiveReturnViewportCenter;
+    if (typeof archiveReturnViewportZoom === "number") figma.viewport.zoom = archiveReturnViewportZoom;
+  } else {
+    figma.notify("⚠️ Исходная страница больше не существует");
+  }
+  archiveReturnPageId = null;
+  archiveReturnViewportCenter = null;
+  archiveReturnViewportZoom = null;
+  figma.ui.postMessage({ type: "archiveBackDone" });
 }
