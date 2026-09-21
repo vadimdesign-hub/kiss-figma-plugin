@@ -399,11 +399,14 @@
       flex-direction: column;
       align-items: flex-start;
       justify-content: space-between;
-      transition: background 0.12s, transform 0.1s, height 0.15s ease-out, padding 0.15s ease-out;
+      transition: background 0.12s, transform 0.1s, height 0.15s ease-out, padding 0.15s ease-out, opacity 0.13s ease-out;
       flex-shrink: 0;
       padding: 5px 0 5px 6px;
       position: relative;
     }
+    /* Плавное появление кнопки при раскрытии панели (вместо мгновенного
+       скачка) — applyState() вешает класс на кадр, затем снимает */
+    .tool-btn-reveal { opacity: 0; transform: scale(0.85); }
 
     .tool-btn:hover {
       background: var(--btn-hover);
@@ -1038,6 +1041,7 @@
       flex-direction: column;
       gap: 2px;
       flex-shrink: 0;
+      transition: opacity 0.13s ease-out, transform 0.13s ease-out;
     }
 
     .tool-group {
@@ -1075,6 +1079,7 @@
       width: 88px;
       height: 50px;
       flex-shrink: 0;
+      transition: opacity 0.13s ease-out, transform 0.13s ease-out;
     }
     .tool-grid-btn {
       width: calc(50% - 1px);
@@ -2750,7 +2755,18 @@
         const collapsedSet = new Set(collapsedList);
         btnEls.forEach((btn, i) => {
           const t = active[i];
-          btn.style.display = (expanded || (t && collapsedSet.has(t))) ? "flex" : "none";
+          const shouldShow = expanded || (t && collapsedSet.has(t));
+          const wasHidden = btn.style.display === "none";
+          btn.style.display = shouldShow ? "flex" : "none";
+          if (shouldShow && wasHidden) {
+            // Плавное появление вместо мгновенного скачка: сначала ставим
+            // кнопку в "уменьшенное прозрачное" состояние, следующим кадром
+            // снимаем класс — переход в обычный вид анимируется transition'ом
+            btn.classList.add("tool-btn-reveal");
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => btn.classList.remove("tool-btn-reveal"));
+            });
+          }
         });
         arrow.textContent = expanded ? "‹" : "›";
         customizeBtn.style.display = expanded ? "flex" : "none";
