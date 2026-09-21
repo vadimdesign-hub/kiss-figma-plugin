@@ -2875,19 +2875,34 @@
       // Наведение на стрелку "›" само раскрывает панель, без клика — как
       // предпросмотр; если раскрытие было именно таким, при уходе мыши со
       // всей панели (а не только со стрелки — иначе не успеть перейти к
-      // появившимся кнопкам) сворачиваем обратно
+      // появившимся кнопкам) сворачиваем обратно, но не сразу — с небольшой
+      // задержкой, чтобы случайно мазнувшая в сторону мышь не закрывала всё
+      const HOVER_COLLAPSE_DELAY_MS = 2000;
+      let hoverCollapseTimer = null;
       arrow.addEventListener("mouseenter", () => {
+        if (hoverCollapseTimer) { clearTimeout(hoverCollapseTimer); hoverCollapseTimer = null; }
         if (expanded) return;
         expanded = true;
         hoverExpanded = true;
         applyState();
       });
+      tbEl.addEventListener("mouseenter", () => {
+        // Мышь вернулась на панель до истечения задержки — отменяем сворачивание
+        if (hoverCollapseTimer) { clearTimeout(hoverCollapseTimer); hoverCollapseTimer = null; }
+      });
       tbEl.addEventListener("mouseleave", () => {
-        if (hoverExpanded) {
-          expanded = false;
-          hoverExpanded = false;
-          applyState();
-        }
+        if (!hoverExpanded) return;
+        if (hoverCollapseTimer) clearTimeout(hoverCollapseTimer);
+        hoverCollapseTimer = setTimeout(() => {
+          hoverCollapseTimer = null;
+          // Перепроверяем — за время ожидания состояние могло измениться
+          // (например клик по стрелке или открытие "Настроек" зафиксировали панель)
+          if (hoverExpanded) {
+            expanded = false;
+            hoverExpanded = false;
+            applyState();
+          }
+        }, HOVER_COLLAPSE_DELAY_MS);
       });
 
       // ===== Настройки (панель): скрыть/показать кнопки =====
