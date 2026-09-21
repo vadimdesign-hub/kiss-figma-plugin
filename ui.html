@@ -1503,7 +1503,7 @@
       arrowUp:   SVG('<path d="M9 15V4"/><path d="M4.5 8.5L9 4l4.5 4.5"/>'),
       arrowDown: SVG('<path d="M9 3v11"/><path d="M4.5 9.5L9 14l4.5-4.5"/>'),
       archiveBox: SVG('<rect x="2" y="3" width="14" height="4" rx="1"/><path d="M3 7v6.5A1.5 1.5 0 004.5 15h9a1.5 1.5 0 001.5-1.5V7"/><line x1="7" y1="10" x2="11" y2="10"/>'),
-      pin: SVG('<path d="M9 16.5S15 11 15 7a6 6 0 10-12 0c0 4 6 9.5 6 9.5z"/><circle cx="9" cy="7" r="2"/>'),
+      pin: SVG('<circle cx="9" cy="5.5" r="3"/><line x1="9" y1="8.5" x2="9" y2="16"/>'),
     };
     const menu = [
       {
@@ -2482,7 +2482,7 @@
 
       const arrow = document.createElement("button");
       arrow.className = "tool-btn arrow-btn";
-      arrow.innerHTML = getIcon({ icon: IC.pin, emojiIcon: "📌" });
+      arrow.innerHTML = getIcon({ icon: IC.chevronR, emojiIcon: "›" });
       if (!isDynamic) arrow.style.height = btnHeight() + "px";
       toolbar.appendChild(arrow);
 
@@ -2760,9 +2760,13 @@
           const t = active[i];
           btn.style.display = (expanded || (t && collapsedSet.has(t))) ? "flex" : "none";
         });
-        // Значок остаётся пином всегда — синеет только когда раскрытие
-        // по-настоящему закреплено (не просто временный предпросмотр наведением)
+        // Свёрнуто — обычная стрелка вправо; раскрыто — значок пина (синеет,
+        // только когда раскрытие по-настоящему закреплено кликом, а не
+        // просто временный предпросмотр наведением)
         const isPinned = expanded && !hoverExpanded;
+        arrow.innerHTML = expanded
+          ? getIcon({ icon: IC.pin, emojiIcon: "📌" })
+          : getIcon({ icon: IC.chevronR, emojiIcon: "›" });
         arrow.classList.toggle("tool-btn-blue", isPinned);
         arrow.title = isPinned ? "Закреплено раскрытым — нажми, чтобы свернуть" : expanded ? "Нажми, чтобы закрепить раскрытым" : "Показать все команды";
         customizeBtn.style.display = expanded ? "flex" : "none";
