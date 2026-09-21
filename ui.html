@@ -2877,7 +2877,7 @@
       // всей панели (а не только со стрелки — иначе не успеть перейти к
       // появившимся кнопкам) сворачиваем обратно, но не сразу — с небольшой
       // задержкой, чтобы случайно мазнувшая в сторону мышь не закрывала всё
-      const HOVER_COLLAPSE_DELAY_MS = 2000;
+      const HOVER_COLLAPSE_DELAY_MS = 1000;
       let hoverCollapseTimer = null;
       arrow.addEventListener("mouseenter", () => {
         if (hoverCollapseTimer) { clearTimeout(hoverCollapseTimer); hoverCollapseTimer = null; }
