@@ -1124,6 +1124,28 @@
       background: var(--check-bg);
       transition: border-color 0.15s, background 0.15s;
     }
+    /* Маленькая кнопка-переход на кнопке "Архив" — появляется после того,
+       как что-то реально перенесли, ведёт на страницу архива к перенесённому */
+    .archive-jump-btn {
+      --svg-stroke: #fff;
+      display: none;
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 14px;
+      height: 14px;
+      border: none;
+      border-radius: 50%;
+      background: var(--btn-blue-fg);
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      cursor: pointer;
+      line-height: 0;
+      z-index: 1;
+    }
+    .archive-jump-btn:hover { filter: brightness(1.1); }
+    .archive-jump-btn svg { width: 9px; height: 9px; }
     .btn-check-row {
       position: absolute;
       display: flex;
@@ -1480,6 +1502,8 @@
       moveInto:  SVG('<rect x="8" y="3" width="8" height="12" rx="1.5"/><path d="M1 9h6.5"/><path d="M4.5 6L8 9l-3.5 3"/>'),
       arrowUp:   SVG('<path d="M9 15V4"/><path d="M4.5 8.5L9 4l4.5 4.5"/>'),
       arrowDown: SVG('<path d="M9 3v11"/><path d="M4.5 9.5L9 14l4.5-4.5"/>'),
+      archiveBox: SVG('<rect x="2" y="3" width="14" height="4" rx="1"/><path d="M3 7v6.5A1.5 1.5 0 004.5 15h9a1.5 1.5 0 001.5-1.5V7"/><line x1="7" y1="10" x2="11" y2="10"/>'),
+      jumpTo:     SVG('<path d="M5 13L13 5"/><path d="M8 5h5v5"/>'),
     };
     const menu = [
       {
@@ -1641,6 +1665,13 @@
         how: "Выдели один фрейм или компонент, нажми «QA», настрой тумблеры в панели и нажми «Начать анализ»."
       },
       {
+        icon: IC.archiveBox, emojiIcon: "🗄️",
+        label: "Архив",
+        getPreview(s) { const i = s === "emoji" ? "🗄️" : IC.archiveBox; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Архив</span></div></div>`; },
+        description: `Выдели что угодно — секции, фреймы, отдельные объекты, в любом количестве — и нажми «Архив». Плагин найдёт в файле страницу с именем <b>Archive</b> или <b>Архив</b> (без учёта регистра, опечатка «Arhive» тоже подойдёт) и перенесёт туда выделенное.\n\nЕсли выделены и родитель, и что-то внутри него (например секция и фрейм в ней) — переносится только родитель целиком, дублирования не будет.\n\nВставляется всё разом, одним блоком, сохраняя расположение объектов друг относительно друга — но целиком снизу от всего, что уже есть на странице архива, чтобы точно ни с чем не пересечься.\n\nПосле переноса на кнопке появляется маленькая синяя стрелка — клик по ней переключает на страницу архива и сразу выделяет и приближает то, что только что перенесли, чтобы сразу проверить, куда оно легло.`,
+        how: "Выдели что нужно убрать в архив и нажми «Архив». Нужна страница с именем Archive/Архив в файле — если её нет, появится уведомление."
+      },
+      {
         icon: IC.gear, emojiIcon: "⚙️",
         label: "Настройки (панель)",
         getPreview(s) { const i = s === "emoji" ? "⚙️" : IC.gear; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Настройки</span></div></div>`; },
@@ -1713,6 +1744,7 @@
         { icon: IC.arrowDown, emojiIcon: "⬇️", command: "sendToBack",   title: "На задний план (внутри родителя)" },
       ]},
       { icon: IC.custom, emojiIcon: "✨", label: "QA", command: "runAgent" },
+      { icon: IC.archiveBox, emojiIcon: "🗄️", label: "Архив", command: "archiveSelection" },
     ];
 
     let expandChkR = null, expandChkL = null;
@@ -1734,6 +1766,10 @@
     let agApplyState = null;       // ссылка на applyState() открытого тулбара — пересчитать высоту окна
     let agentCloseFn = null;       // закрывает панель AI, если она открыта (для др. панелей тулбара)
     let agentBtnEl = null;         // сама кнопка "QA" на тулбаре — серая обычно, синяя пока панель открыта
+
+    // ===== Архив — переносит выделение на страницу Archive/Архив =====
+    let archiveBtnEl = null;       // сама кнопка "Архив" на тулбаре
+    let archiveJumpBtnEl = null;   // маленькая кнопка-стрелка на ней — появляется после переноса
     let agentSourceParams = null;  // {fileKey, nodeId} или {url} — определяется при открытии панели, до нажатия "Начать анализ"
 
     const agPanel = document.getElementById("agentPanel");
@@ -2261,6 +2297,11 @@
         return;
       }
 
+      if (msg.type === "archiveDone") {
+        if (archiveJumpBtnEl) archiveJumpBtnEl.style.display = "flex";
+        return;
+      }
+
       if (msg.type === "similarReplaceResults") {
         openSimReplacePanel(msg.sources, msg.target);
         return;
@@ -2620,6 +2661,20 @@
         if (t.command === "runAgent") {
           agentBtnEl = btn;
           btn.classList.toggle("tool-btn-blue", agentPanelOpen);
+        }
+        if (t.command === "archiveSelection") {
+          archiveBtnEl = btn;
+          const jumpBtn = document.createElement("button");
+          jumpBtn.type = "button";
+          jumpBtn.className = "archive-jump-btn";
+          jumpBtn.title = "Перейти к перенесённому в архив";
+          jumpBtn.innerHTML = getIcon({ icon: IC.jumpTo, emojiIcon: "↗️" });
+          jumpBtn.addEventListener("click", e => {
+            e.stopPropagation();
+            parent.postMessage({ pluginMessage: { type: "run", command: "focusArchive" } }, "*");
+          });
+          btn.appendChild(jumpBtn);
+          archiveJumpBtnEl = jumpBtn;
         }
         toolbar.insertBefore(btn, customizeBtn);
         return btn;

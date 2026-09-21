@@ -6,6 +6,8 @@ let pendingTranslations = 0;
 let lastAddedNode = null;
 let prevSelectionIds = new Set();
 let selectionOrderIds = []; // порядок, в котором объекты попали в текущее выделение (для "Переименовать")
+let lastArchivedIds = [];      // id объектов, перенесённых последним "В архив" — для кнопки-перехода
+let lastArchivePageId = null;  // id страницы архива, куда их перенесли
 function tryClose() { if (!keepAlive) figma.closePlugin(); }
 
 function checkFrameSelected() {
@@ -329,6 +331,8 @@ figma.ui.onmessage = async (msg) => {
     case "bringToFront":     bringSelectionToFront(); break;
     case "sendToBack":       sendSelectionToBack(); break;
     case "runAgent":         runAgentOnSelection(); break;
+    case "archiveSelection": archiveSelection(); break;
+    case "focusArchive":     focusArchive(); break;
   }
 };
 
@@ -2949,4 +2953,114 @@ function runAgentOnSelection() {
     nodeIdUrl,
     nodeName: node.name,
   });
+}
+
+// ============================
+// В архив — переносит выделение (секции, фреймы, что угодно) на страницу
+// "Archive"/"Arhive"/"Архив" (без учёта регистра), в свободное место снизу
+// от того, что там уже есть, чтобы не пересечься с существующим содержимым.
+// ============================
+const ARCHIVE_PAGE_NAMES = ["archive", "arhive", "архив"];
+
+function findArchivePage() {
+  return figma.root.children.find(
+    p => p.type === "PAGE" && ARCHIVE_PAGE_NAMES.includes(p.name.trim().toLowerCase())
+  );
+}
+
+function archiveSelection() {
+  const selection = figma.currentPage.selection;
+  if (!selection || selection.length === 0) {
+    figma.notify("⚠️ Выдели что-нибудь для переноса в архив");
+    return;
+  }
+
+  const archivePage = findArchivePage();
+  if (!archivePage) {
+    figma.notify("⚠️ Не найдена страница «Архив» — создай страницу с именем Archive или Архив");
+    return;
+  }
+  if (archivePage.id === figma.currentPage.id) {
+    figma.notify("⚠️ Ты уже на странице «Архив»");
+    return;
+  }
+
+  // Оставляем только "верхнеуровневые" среди выделенных — если выбрана и
+  // секция, и что-то внутри неё, переносим только секцию целиком (вместе
+  // со всем содержимым), а не пытаемся перенести обе по отдельности
+  const selSet = new Set(selection.map(n => n.id));
+  const topLevel = selection.filter(n => {
+    let p = n.parent;
+    while (p) {
+      if (selSet.has(p.id)) return false;
+      p = p.parent;
+    }
+    return true;
+  });
+  if (topLevel.length === 0) {
+    figma.notify("⚠️ Нечего переносить");
+    return;
+  }
+
+  // Абсолютные (в координатах текущей страницы) позиции — учитывают
+  // вложенность, если выделен не верхнеуровневый объект (например фрейм
+  // внутри секции, но не сама секция)
+  const boxes = topLevel.map(n => {
+    const bb = n.absoluteBoundingBox;
+    return bb
+      ? { node: n, x: bb.x, y: bb.y }
+      : { node: n, x: n.x, y: n.y };
+  });
+  const selMinX = Math.min(...boxes.map(b => b.x));
+  const selMinY = Math.min(...boxes.map(b => b.y));
+
+  // Свободное место на странице архива — снизу от всего, что там уже есть,
+  // чтобы гарантированно не пересечься с существующим содержимым
+  const ARCHIVE_GAP = 240;
+  const existing = archivePage.children;
+  let targetX = 0, targetY = 0;
+  if (existing.length > 0) {
+    targetX = Math.min(...existing.map(n => n.x));
+    targetY = Math.max(...existing.map(n => n.y + (n.height || 0))) + ARCHIVE_GAP;
+  }
+  const dx = targetX - selMinX;
+  const dy = targetY - selMinY;
+
+  const moved = [];
+  for (const { node, x, y } of boxes) {
+    const newX = Math.round(x + dx);
+    const newY = Math.round(y + dy);
+    archivePage.appendChild(node);
+    node.x = newX;
+    node.y = newY;
+    moved.push(node);
+  }
+
+  lastArchivedIds = moved.map(n => n.id);
+  lastArchivePageId = archivePage.id;
+
+  figma.notify(`🗄️ Перенесено в «${archivePage.name}»: ${moved.length}`);
+  figma.ui.postMessage({ type: "archiveDone", count: moved.length });
+  tryClose();
+}
+
+// Переходит на страницу архива и фокусирует последний перенесённый набор
+function focusArchive() {
+  if (!lastArchivePageId || lastArchivedIds.length === 0) {
+    figma.notify("⚠️ В этой сессии ещё ничего не переносили в архив");
+    return;
+  }
+  const page = figma.getNodeById(lastArchivePageId);
+  if (!page || page.type !== "PAGE") {
+    figma.notify("⚠️ Страница архива больше не существует");
+    return;
+  }
+  const nodes = lastArchivedIds.map(id => figma.getNodeById(id)).filter(Boolean);
+  if (nodes.length === 0) {
+    figma.notify("⚠️ Перенесённые объекты не найдены — возможно, их удалили");
+    return;
+  }
+  figma.currentPage = page;
+  figma.currentPage.selection = nodes;
+  figma.viewport.scrollAndZoomIntoView(nodes);
 }
