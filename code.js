@@ -171,9 +171,10 @@ case "doneTag":
       const savedWidthDelta = await figma.clientStorage.getAsync("widthDelta");
       const savedHeightDelta = await figma.clientStorage.getAsync("heightDelta");
       const savedGroupWidthDelta = await figma.clientStorage.getAsync("groupWidthDelta");
+      const savedSectionGap = await figma.clientStorage.getAsync("sectionGap");
       const initHeight = savedDynamic === "dynamic" ? 33 : 58;
       figma.showUI(__html__, { width: 320, height: initHeight, title: "Kiss" });
-      figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null });
+      figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null, savedSectionGap: typeof savedSectionGap === "number" ? savedSectionGap : null });
       checkFrameSelected();
     })();
     break;
@@ -256,6 +257,10 @@ figma.ui.onmessage = async (msg) => {
     await figma.clientStorage.setAsync("groupWidthDelta", msg.value);
     return;
   }
+  if (msg.type === "saveSectionGap") {
+    await figma.clientStorage.setAsync("sectionGap", msg.value);
+    return;
+  }
   if (msg.type === "settingsDone") {
     figma.notify("Настройки применены ✅");
     // Reopen toolbar
@@ -270,9 +275,10 @@ figma.ui.onmessage = async (msg) => {
     const savedWidthDelta = await figma.clientStorage.getAsync("widthDelta");
     const savedHeightDelta = await figma.clientStorage.getAsync("heightDelta");
     const savedGroupWidthDelta = await figma.clientStorage.getAsync("groupWidthDelta");
+    const savedSectionGap = await figma.clientStorage.getAsync("sectionGap");
     const initHeight = savedDynamic === "dynamic" ? 33 : 58;
     figma.showUI(__html__, { width: 320, height: initHeight, title: "Kiss" });
-    figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null });
+    figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null, savedSectionGap: typeof savedSectionGap === "number" ? savedSectionGap : null });
     return;
   }
   if (msg.type === "translationResult") {
@@ -299,7 +305,7 @@ figma.ui.onmessage = async (msg) => {
   }
   if (msg.type !== "run") return;
   switch (msg.command) {
-    case "alignAllSections": alignAllSections(msg.compact); break;
+    case "alignAllSections": alignAllSections(msg.compact, msg.sectionGap); break;
     case "expandSection":    expandSection(msg.duplicate !== false);       break;
     case "expandSectionLeft": expandSectionLeft(msg.duplicate !== false);  break;
     case "autosection":      await autoSectionAlign(msg.withKeyboard); break;
@@ -1045,9 +1051,9 @@ function wrapOrAlignSectionClean() {
 // ============================================
 // ⚡ ВЫРОВНЯТЬ ВСЕ СЕКЦИИ С КОМПОНЕНТОМ В СВОЕМ РЯДУ
 // ============================================
-function alignAllSections(compact) {
-  const SECTION_GAP = 240;
-  const ROW_GAP = 240;
+function alignAllSections(compact, gap) {
+  const SECTION_GAP = typeof gap === "number" ? gap : 400;
+  const ROW_GAP = SECTION_GAP;
 
   function isVisible(n) { return n && n.visible !== false; }
   function isUnlocked(n) { return n && !n.locked; }

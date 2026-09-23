@@ -573,6 +573,44 @@
       color: var(--label-color);
       font-variant-numeric: tabular-nums;
     }
+    .cz-card-row {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .cz-input-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .cz-input {
+      width: 60px;
+      flex: none;
+      box-sizing: border-box;
+      border: 1px solid var(--tray-border);
+      border-radius: 6px;
+      background: var(--tb-bg);
+      color: var(--label-color);
+      font-size: 12px;
+      padding: 6px 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    .cz-input:focus { outline: none; border-color: var(--btn-blue-fg); }
+    .cz-save-btn {
+      border: none;
+      border-radius: 6px;
+      background: var(--btn-blue-bg);
+      color: var(--btn-blue-fg);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 7px 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .cz-save-btn:hover { background: var(--btn-blue-hover); }
 
     #toolTray {
       display: flex;
@@ -1316,6 +1354,18 @@
         </div>
       </div>
     </div>
+    <div class="cz-block">
+      <div class="cz-title">Кнопка «Секции»</div>
+      <div class="cz-cards">
+        <div class="cz-card cz-card-row">
+          <span class="cz-label">Расстояние между секциями, px</span>
+          <div class="cz-input-row">
+            <input type="number" class="cz-input" id="sectionGapInput" min="0" step="1" value="400" />
+            <button class="cz-save-btn" id="sectionGapSave" type="button">Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div id="simReplacePanel">
     <div class="sr-box">
@@ -1510,7 +1560,7 @@
         icon: IC.grid, emojiIcon: "⚡",
         label: "Выровнять все секции",
         getPreview(s) { const i = s === "emoji" ? "⚡" : IC.grid; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Секции</span></div></div>`; },
-        description: `Одна кнопка — и все секции на странице выстраиваются в аккуратную сетку слева направо, сверху вниз. Секция с компонентами автоматически встаёт первой в своём ряду. Полезно когда после долгой работы страница превратилась в хаос — запускаешь и всё встаёт на своё место.\n\nЕсли перед запуском выделить <b>несколько (2 и более) секций</b> — команда выровняет только их между собой, по тому же принципу, не трогая остальные секции на странице. Точка отсчёта в этом случае — исходный верхний левый угол самой верхней левой из выделенных секций, а не левый край страницы.\n\nНа кнопке есть чекбокс <b>«Максимально плотная компоновка»</b> — он появляется на кнопке только когда в Figma реально выделено 2 и более секций (в остальное время скрыт). Вместо рядов раскладывает секции по колонкам (как masonry-сетка), стараясь получить максимально компактный, близкий к квадрату результат без пустот.\n\nСначала у каждой секции обрезается пустой запас вокруг содержимого (по ширине и/или высоте — где реально есть запас), затем допускается ещё немного растянуть ширину под ширину колонки (обычно в пределах ~200px, а если иначе никак не скомпоновать — то и больше). Любое изменение размера происходит симметрично из центра — содержимое секции остаётся на месте, пространство добавляется/убирается поровну со всех сторон.`,
+        description: `Одна кнопка — и все секции на странице выстраиваются в аккуратную сетку слева направо, сверху вниз. Секция с компонентами автоматически встаёт первой в своём ряду. Полезно когда после долгой работы страница превратилась в хаос — запускаешь и всё встаёт на своё место.\n\nЕсли перед запуском выделить <b>несколько (2 и более) секций</b> — команда выровняет только их между собой, по тому же принципу, не трогая остальные секции на странице. Точка отсчёта в этом случае — исходный верхний левый угол самой верхней левой из выделенных секций, а не левый край страницы.\n\nРасстояние между секциями по умолчанию — 400px, настраивается в раскрытой панели → «Настройки» → блок «Кнопка «Секции»» (шаг 20px). Действует и на выравнивание всех секций, и на scoped-режим (2+ выделенных) — но не на «Максимально плотную компоновку» ниже, у неё свой, гораздо меньший отступ.\n\nНа кнопке есть чекбокс <b>«Максимально плотная компоновка»</b> — он появляется на кнопке только когда в Figma реально выделено 2 и более секций (в остальное время скрыт). Вместо рядов раскладывает секции по колонкам (как masonry-сетка), стараясь получить максимально компактный, близкий к квадрату результат без пустот.\n\nСначала у каждой секции обрезается пустой запас вокруг содержимого (по ширине и/или высоте — где реально есть запас), затем допускается ещё немного растянуть ширину под ширину колонки (обычно в пределах ~200px, а если иначе никак не скомпоновать — то и больше). Любое изменение размера происходит симметрично из центра — содержимое секции остаётся на месте, пространство добавляется/убирается поровну со всех сторон.`,
         how: "Ничего не нужно выделять — просто запусти команду на нужной странице. Чтобы выровнять только часть секций — сначала выдели 2 и более секций. Чтобы получить максимально плотную компоновку с изменением размеров — включи чекбокс на кнопке перед запуском."
       },
       {
@@ -1675,7 +1725,7 @@
         icon: IC.gear, emojiIcon: "⚙️",
         label: "Настройки (панель)",
         getPreview(s) { const i = s === "emoji" ? "⚙️" : IC.gear; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Настройки</span></div></div>`; },
-        description: `Открывает панель с двумя блоками. Появляется только в раскрытом виде — сначала нажми стрелку «›», в конце ряда появится кнопка «Настройки».\n\n<b>Скрытые пункты</b> — перетащи сюда кнопку из основного ряда, чтобы скрыть её. Перетащи кнопку отсюда обратно наверх — она снова появится в ряду.\n\n<b>Кастомизация главного вида</b>:\n• <b>Кнопок в свёрнутом виде</b> — сколько обычных кнопок показывать, когда панель свёрнута (плюс/минус, по умолчанию 3). Стрелки ⬅️➡️ и сама кнопка раскрытия «›» в счёт не идут — они видны всегда.\n• <b>Изменение ширины кнопок</b> — плюс увеличивает ширину каждой обычной кнопки на 1 px, минус уменьшает (можно уйти в минус). Стрелки ⬅️➡️ и кнопка раскрытия в размере не меняются.\n• <b>Изменение высоты кнопок</b> — то же самое, но по высоте, шаг тоже 1 px.\n\nПовторное нажатие «Настройки» сворачивает панель; при сворачивании стрелкой «‹» она закрывается автоматически. Все эти настройки запоминаются между сессиями, как и порядок кнопок.`,
+        description: `Открывает панель с несколькими блоками. Появляется только в раскрытом виде — сначала наведи или нажми на кнопку-пин в конце ряда, в конце ряда появится кнопка «Настройки».\n\n<b>Скрытые пункты</b> — перетащи сюда кнопку из основного ряда, чтобы скрыть её. Перетащи кнопку отсюда обратно наверх — она снова появится в ряду.\n\n<b>Кастомизация главного вида</b>:\n• <b>Кнопок в свёрнутом виде</b> — сколько обычных кнопок показывать, когда панель свёрнута (плюс/минус, по умолчанию 3). Стрелки ⬅️➡️ и сама кнопка-пин в счёт не идут — они видны всегда.\n• <b>Изменение ширины кнопок</b> — плюс увеличивает ширину каждой обычной кнопки на 1 px, минус уменьшает (можно уйти в минус).\n• <b>Изменение высоты кнопок</b> — то же самое, но по высоте, шаг тоже 1 px.\n\n<b>Составные кнопки (↑/↓)</b> — отдельный счётчик ширины только для кнопок-«столбиков» вроде «На передний/задний план» (высота у них всегда равна высоте обычной кнопки).\n\n<b>Кнопка «Секции»</b> — расстояние между секциями при выравнивании, по умолчанию 400px, шаг 20px.\n\nПовторное нажатие «Настройки» сворачивает панель. Все эти настройки запоминаются между сессиями, как и порядок кнопок.`,
         how: "Раскрой панель стрелкой «›», нажми «Настройки» в конце ряда — перетаскивай кнопки в «Скрытые пункты» или настраивай счётчики в «Кастомизации главного вида»."
       }
     ];
@@ -2394,6 +2444,9 @@
       // только ширину отдельным счётчиком — высота у них всегда равна высоте
       // обычной кнопки (2 половинки строго делят её пополам)
       const GROUP_WIDTH_DELTA_MIN = -14, GROUP_WIDTH_DELTA_MAX = 60, GROUP_WIDTH_DELTA_STEP = 1;
+      // Расстояние между секциями для кнопки "Секции" (обычный режим — не
+      // "Максимально плотная компоновка", у неё свой, гораздо меньший отступ)
+      const SECTION_GAP_MIN = 0, SECTION_GAP_MAX = 2000, SECTION_GAP_DEFAULT = 400;
       // Стрелки "влево/вправо" по секциям всегда видны и не участвуют
       // ни в подсчёте "кнопок в свёрнутом виде", ни в скрытии через трей,
       // ни в изменении ширины/высоты
@@ -2403,6 +2456,7 @@
       let widthDelta = typeof msg.savedWidthDelta === "number" ? msg.savedWidthDelta : 0;
       let heightDelta = typeof msg.savedHeightDelta === "number" ? msg.savedHeightDelta : 0;
       let groupWidthDelta = typeof msg.savedGroupWidthDelta === "number" ? msg.savedGroupWidthDelta : 0;
+      let sectionGap = typeof msg.savedSectionGap === "number" ? msg.savedSectionGap : SECTION_GAP_DEFAULT;
 
       function groupWidth(t) {
         return Math.max(20, (t.width || 34) + groupWidthDelta);
@@ -2676,7 +2730,7 @@
           btn.appendChild(pchk);
           compactChk = pchk;
           btn.addEventListener("click", () => {
-            parent.postMessage({ pluginMessage: { type: "run", command: t.command, compact: pchk.checked } }, "*");
+            parent.postMessage({ pluginMessage: { type: "run", command: t.command, compact: pchk.checked, sectionGap } }, "*");
           });
         } else if (t.command === "runAgent") {
           btn.addEventListener("click", () => {
@@ -3042,15 +3096,18 @@
       const widthDeltaVal = document.getElementById("widthDeltaVal");
       const heightDeltaVal = document.getElementById("heightDeltaVal");
       const groupWidthDeltaVal = document.getElementById("groupWidthDeltaVal");
+      const sectionGapInput = document.getElementById("sectionGapInput");
 
       function updateVisCountUI() { visCountVal.textContent = String(visibleCount); }
       function updateWidthDeltaUI() { widthDeltaVal.textContent = (widthDelta > 0 ? "+" : "") + widthDelta; }
       function updateHeightDeltaUI() { heightDeltaVal.textContent = (heightDelta > 0 ? "+" : "") + heightDelta; }
       function updateGroupWidthDeltaUI() { groupWidthDeltaVal.textContent = (groupWidthDelta > 0 ? "+" : "") + groupWidthDelta; }
+      function updateSectionGapUI() { sectionGapInput.value = sectionGap; }
       updateVisCountUI();
       updateWidthDeltaUI();
       updateHeightDeltaUI();
       updateGroupWidthDeltaUI();
+      updateSectionGapUI();
 
       function rebuildButtonWidths() {
         btnEls.forEach(el => {
@@ -3126,6 +3183,16 @@
         updateGroupWidthDeltaUI();
         rebuildButtonWidths();
         applyState();
+      });
+      function saveSectionGap() {
+        const parsed = Math.round(Number(sectionGapInput.value));
+        sectionGap = Number.isFinite(parsed) ? Math.min(SECTION_GAP_MAX, Math.max(SECTION_GAP_MIN, parsed)) : sectionGap;
+        parent.postMessage({ pluginMessage: { type: "saveSectionGap", value: sectionGap } }, "*");
+        updateSectionGapUI(); // на случай если введённое число подрезали по границам — покажем итоговое
+      }
+      document.getElementById("sectionGapSave").addEventListener("click", saveSectionGap);
+      sectionGapInput.addEventListener("keydown", e => {
+        if (e.key === "Enter") saveSectionGap();
       });
 
       // Live drag-and-drop reordering (внутри основного ряда, отключено в режиме настройки)
