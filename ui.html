@@ -2229,6 +2229,33 @@
       parent.postMessage({ pluginMessage: { type: "run", command: "pickNewTarget" } }, "*");
     });
 
+    // Копирует текст в буфер обмена. Основной путь — Clipboard API; если он
+    // недоступен или откажет (частый кейс — "Document is not focused" у
+    // плавающей панели плагина без фокуса ОС) — запасной путь через
+    // document.execCommand("copy") с временным textarea, который работает
+    // даже без фокуса документа.
+    function copyTextToClipboard(text) {
+      const viaExecCommand = () => new Promise((resolve, reject) => {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.top = "0";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+        document.body.removeChild(ta);
+        ok ? resolve() : reject(new Error("execCommand copy failed"));
+      });
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).catch(viaExecCommand);
+      }
+      return viaExecCommand();
+    }
+
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
       if (!msg) return;
@@ -2269,8 +2296,10 @@
 
         if (fileKey) {
           const link = "https://www.figma.com/design/" + fileKey + "?node-id=" + msg.nodeId;
-          navigator.clipboard.writeText(link).then(() => {
+          copyTextToClipboard(link).then(() => {
             parent.postMessage({ pluginMessage: { type: "clipboardDone" } }, "*");
+          }).catch(() => {
+            parent.postMessage({ pluginMessage: { type: "clipboardFail" } }, "*");
           });
         } else {
           parent.postMessage({ pluginMessage: { type: "clipboardFail" } }, "*");
@@ -2289,8 +2318,10 @@
 
         if (fileKey) {
           const links = msg.nodeIds.map(id => "https://www.figma.com/design/" + fileKey + "?node-id=" + id);
-          navigator.clipboard.writeText(links.join("\n")).then(() => {
+          copyTextToClipboard(links.join("\n")).then(() => {
             parent.postMessage({ pluginMessage: { type: "clipboardLinksDone", count: links.length } }, "*");
+          }).catch(() => {
+            parent.postMessage({ pluginMessage: { type: "clipboardFail" } }, "*");
           });
         } else {
           parent.postMessage({ pluginMessage: { type: "clipboardFail" } }, "*");
