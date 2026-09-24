@@ -216,6 +216,10 @@ figma.ui.onmessage = async (msg) => {
     figma.notify("⚠️ Не удалось получить ключ файла");
     return;
   }
+  if (msg.type === "clipboardLinksDone") {
+    figma.notify(`🔗 Скопировано ссылок: ${msg.count} ✅`);
+    return;
+  }
   if (msg.type === "saveOrder") {
     await figma.clientStorage.setAsync("toolOrder", msg.order);
     return;
@@ -333,6 +337,7 @@ figma.ui.onmessage = async (msg) => {
     case "reviewTag":        createReviewTag(); break;
     case "readyForDev":      readyForDevSection(); break;
     case "copyLink":         copyLinkToSelection(); break;
+    case "copyLinks":        copyLinksToSelection(); break;
     case "translate":        translateFrames(); break;
     case "custom":           customIgnoreAutoLayout(); break;
     case "gridLayout":       gridLayout(); break;
@@ -2381,6 +2386,24 @@ function copyLinkToSelection() {
 
   // Передаём nodeId и fileKey (если есть) в UI — UI достанет fileKey из referrer если нужно
   figma.ui.postMessage({ type: "requestCopyLink", nodeId, fileKey: fileKey || null });
+}
+
+// ============================
+// Копировать ссылки на все выделенные объекты (каждая с новой строки)
+// ============================
+function copyLinksToSelection() {
+  const selection = figma.currentPage.selection;
+
+  if (!selection || selection.length === 0) {
+    figma.notify("⚠️ Выделите объект(ы)");
+    tryClose();
+    return;
+  }
+
+  const nodeIds = selection.map(n => n.id.replace(":", "-"));
+  const fileKey = figma.fileKey;
+
+  figma.ui.postMessage({ type: "requestCopyLinks", nodeIds, fileKey: fileKey || null });
 }
 
 // ============================
