@@ -553,15 +553,20 @@ async function autoSectionAlign(withKeyboard = false) {
 
     // Клон целиком копирует и родные аннотации Figma на каждом узле — по
     // умолчанию их не хотим дублировать во втором (тёмном) ряду, поэтому
-    // рекурсивно проходим по клону и чистим .annotations на всех узлах,
-    // где они поддерживаются.
+    // чистим .annotations на всех узлах клона, где они поддерживаются.
+    // Важно: обходим дерево через встроенный findAll (нативный обход в
+    // движке Figma), а не вручную по .children — на сложных экранах с
+    // тысячами вложенных слоёв (иконки из множества векторов и т.п.)
+    // ручная рекурсия по .children даёт отдельный обмен с движком на
+    // каждом уровне вложенности и заметно тормозит; findAll делает это
+    // одним нативным проходом.
     function clearAnnotations(node) {
       if ("annotations" in node && node.annotations && node.annotations.length > 0) {
         try { node.annotations = []; } catch (e) {}
       }
-      if ("children" in node) {
-        node.children.forEach(child => clearAnnotations(child));
-      }
+      if (!("findAll" in node)) return;
+      node.findAll(n => "annotations" in n && n.annotations && n.annotations.length > 0)
+        .forEach(n => { try { n.annotations = []; } catch (e) {} });
     }
 
     frames.forEach(frame => {
