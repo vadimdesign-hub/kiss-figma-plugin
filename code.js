@@ -554,18 +554,24 @@ async function autoSectionAlign(withKeyboard = false) {
     // Клон целиком копирует и родные аннотации Figma на каждом узле — по
     // умолчанию их не хотим дублировать во втором (тёмном) ряду, поэтому
     // чистим .annotations на всех узлах клона, где они поддерживаются.
-    // Важно: обходим дерево через встроенный findAll (нативный обход в
-    // движке Figma), а не вручную по .children — на сложных экранах с
-    // тысячами вложенных слоёв (иконки из множества векторов и т.п.)
-    // ручная рекурсия по .children даёт отдельный обмен с движком на
-    // каждом уровне вложенности и заметно тормозит; findAll делает это
-    // одним нативным проходом.
+    // Узкое место оказалось не в обходе дерева, а в самом ЧТЕНИИ
+    // .annotations — на каждом узле оно кидает движок доставать/собирать
+    // объект аннотации, даже если она пустая, и на сложных экранах (тысячи
+    // слоёв) это и давало те самые лишние 4 секунды. Поэтому здесь: (1)
+    // findAll фильтрует по .type — это дешёвая проверка, .annotations
+    // вообще не читаем; (2) на найденных узлах annotations = [] проставляем
+    // безусловно, без предварительного чтения — запись пустого массива
+    // явно дешевле, чем чтение существующего.
+    const ANNOTATABLE_TYPES = new Set([
+      "COMPONENT", "COMPONENT_SET", "ELLIPSE", "FRAME", "INSTANCE",
+      "LINE", "POLYGON", "RECTANGLE", "STAR", "TEXT", "VECTOR"
+    ]);
     function clearAnnotations(node) {
-      if ("annotations" in node && node.annotations && node.annotations.length > 0) {
+      if (ANNOTATABLE_TYPES.has(node.type)) {
         try { node.annotations = []; } catch (e) {}
       }
       if (!("findAll" in node)) return;
-      node.findAll(n => "annotations" in n && n.annotations && n.annotations.length > 0)
+      node.findAll(n => ANNOTATABLE_TYPES.has(n.type))
         .forEach(n => { try { n.annotations = []; } catch (e) {} });
     }
 
