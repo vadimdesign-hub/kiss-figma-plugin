@@ -579,6 +579,19 @@
       justify-content: space-between;
       gap: 10px;
     }
+    .cz-block-row {
+      display: flex;
+      gap: 8px;
+    }
+    .cz-block-row .cz-block {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .cz-block-row .cz-block .cz-cards {
+      flex: 1;
+    }
     .cz-input-row {
       display: flex;
       align-items: center;
@@ -1354,14 +1367,25 @@
         </div>
       </div>
     </div>
-    <div class="cz-block">
-      <div class="cz-title">Кнопка «Секции»</div>
-      <div class="cz-cards">
-        <div class="cz-card cz-card-row">
-          <span class="cz-label">Расстояние между секциями, px</span>
-          <div class="cz-input-row">
-            <input type="number" class="cz-input" id="sectionGapInput" min="0" step="1" value="400" />
-            <button class="cz-save-btn" id="sectionGapSave" type="button">Сохранить</button>
+    <div class="cz-block-row">
+      <div class="cz-block">
+        <div class="cz-title">Кнопка «Секции»</div>
+        <div class="cz-cards">
+          <div class="cz-card cz-card-row">
+            <span class="cz-label">Расстояние между секциями, px</span>
+            <div class="cz-input-row">
+              <input type="number" class="cz-input" id="sectionGapInput" min="0" step="1" value="400" />
+              <button class="cz-save-btn" id="sectionGapSave" type="button">Сохранить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cz-block">
+        <div class="cz-title">Тёмная тема</div>
+        <div class="cz-cards">
+          <div class="cz-card cz-card-row">
+            <span class="cz-label">Копировать аннотации в тёмную тему</span>
+            <input type="checkbox" class="btn-check-sm" id="copyAnnotationsDarkChk" />
           </div>
         </div>
       </div>
@@ -1582,7 +1606,7 @@
         icon: IC.contrast, emojiIcon: "📐",
         label: "Выровнять + тёмная",
         getPreview(s) { const i = s === "emoji" ? "📐" : IC.contrast; return `<div class="btn-preview"><div class="btn-preview-item" style="width:80px"><span class="bp-icon">${i}</span><span class="bp-label">Тёмная</span><div class="bp-check" style="top:4px;right:4px"></div><span style="position:absolute;top:6px;right:20px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span></div></div>`; },
-        description: `Выравнивает экраны внутри секции с одинаковыми отступами. Если у тебя нет секции — создаст её сама. Если экраны высокие (больше 960px) — автоматически создаст второй ряд под ними для тёмной версии дизайна. Больше не нужно вручную выстраивать каждый экран и считать отступы.\n\nНа кнопке в панели инструментов есть чекбокс с иконкой клавиатуры — если его включить, перед выравниванием под каждым экраном автоматически добавится компонент клавиатуры (переменная «Keyboard»).`,
+        description: `Выравнивает экраны внутри секции с одинаковыми отступами. Если у тебя нет секции — создаст её сама. Если экраны высокие (больше 960px) — автоматически создаст второй ряд под ними для тёмной версии дизайна. Больше не нужно вручную выстраивать каждый экран и считать отступы.\n\nНа кнопке в панели инструментов есть чекбокс с иконкой клавиатуры — если его включить, перед выравниванием под каждым экраном автоматически добавится компонент клавиатуры (переменная «Keyboard»).\n\nЕсли на экранах есть родные аннотации Figma — по умолчанию они <b>не</b> копируются во второй (тёмный) ряд, чтобы не дублировались. Включить копирование можно в раскрытой панели → «Настройки» → блок «Тёмная тема».`,
         how: "Выдели секцию или набор фреймов и запусти команду. Для режима с клавиатурой — отметь чекбокс перед запуском."
       },
       {
@@ -1733,7 +1757,7 @@
         icon: IC.gear, emojiIcon: "⚙️",
         label: "Настройки (панель)",
         getPreview(s) { const i = s === "emoji" ? "⚙️" : IC.gear; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Настройки</span></div></div>`; },
-        description: `Открывает панель с несколькими блоками. Появляется только в раскрытом виде — сначала наведи или нажми на кнопку-пин в конце ряда, в конце ряда появится кнопка «Настройки».\n\n<b>Скрытые пункты</b> — перетащи сюда кнопку из основного ряда, чтобы скрыть её. Перетащи кнопку отсюда обратно наверх — она снова появится в ряду.\n\n<b>Кастомизация главного вида</b>:\n• <b>Кнопок в свёрнутом виде</b> — сколько обычных кнопок показывать, когда панель свёрнута (плюс/минус, по умолчанию 3). Стрелки ⬅️➡️ и сама кнопка-пин в счёт не идут — они видны всегда.\n• <b>Изменение ширины кнопок</b> — плюс увеличивает ширину каждой обычной кнопки на 1 px, минус уменьшает (можно уйти в минус).\n• <b>Изменение высоты кнопок</b> — то же самое, но по высоте, шаг тоже 1 px.\n\n<b>Составные кнопки (↑/↓)</b> — отдельный счётчик ширины только для кнопок-«столбиков» вроде «На передний/задний план» (высота у них всегда равна высоте обычной кнопки).\n\n<b>Кнопка «Секции»</b> — расстояние между секциями при выравнивании, по умолчанию 400px; введи новое значение в поле и нажми «Сохранить».\n\nПовторное нажатие «Настройки» сворачивает панель. Все эти настройки запоминаются между сессиями, как и порядок кнопок.`,
+        description: `Открывает панель с несколькими блоками. Появляется только в раскрытом виде — сначала наведи или нажми на кнопку-пин в конце ряда, в конце ряда появится кнопка «Настройки».\n\n<b>Скрытые пункты</b> — перетащи сюда кнопку из основного ряда, чтобы скрыть её. Перетащи кнопку отсюда обратно наверх — она снова появится в ряду.\n\n<b>Кастомизация главного вида</b>:\n• <b>Кнопок в свёрнутом виде</b> — сколько обычных кнопок показывать, когда панель свёрнута (плюс/минус, по умолчанию 3). Стрелки ⬅️➡️ и сама кнопка-пин в счёт не идут — они видны всегда.\n• <b>Изменение ширины кнопок</b> — плюс увеличивает ширину каждой обычной кнопки на 1 px, минус уменьшает (можно уйти в минус).\n• <b>Изменение высоты кнопок</b> — то же самое, но по высоте, шаг тоже 1 px.\n\n<b>Составные кнопки (↑/↓)</b> — отдельный счётчик ширины только для кнопок-«столбиков» вроде «На передний/задний план» (высота у них всегда равна высоте обычной кнопки).\n\n<b>Кнопка «Секции»</b> — расстояние между секциями при выравнивании, по умолчанию 400px; введи новое значение в поле и нажми «Сохранить».\n\n<b>Тёмная тема</b> — чекбокс «Копировать аннотации в тёмную тему» (по умолчанию выключен). Если выключен — родные аннотации Figma, которые есть на экранах, не попадают в скопированный тёмный ряд, созданный кнопкой «Тёмная». Если включить — будут копироваться вместе с остальным содержимым.\n\nПовторное нажатие «Настройки» сворачивает панель. Все эти настройки запоминаются между сессиями, как и порядок кнопок.`,
         how: "Раскрой панель стрелкой «›», нажми «Настройки» в конце ряда — перетаскивай кнопки в «Скрытые пункты» или настраивай счётчики в «Кастомизации главного вида»."
       }
     ];
@@ -2517,6 +2541,7 @@
       let heightDelta = typeof msg.savedHeightDelta === "number" ? msg.savedHeightDelta : 0;
       let groupWidthDelta = typeof msg.savedGroupWidthDelta === "number" ? msg.savedGroupWidthDelta : 0;
       let sectionGap = typeof msg.savedSectionGap === "number" ? msg.savedSectionGap : SECTION_GAP_DEFAULT;
+      let copyAnnotationsDark = msg.savedCopyAnnotationsDark === true;
 
       function groupWidth(t) {
         return Math.max(20, (t.width || 34) + groupWidthDelta);
@@ -3253,6 +3278,13 @@
       document.getElementById("sectionGapSave").addEventListener("click", saveSectionGap);
       sectionGapInput.addEventListener("keydown", e => {
         if (e.key === "Enter") saveSectionGap();
+      });
+
+      const copyAnnotationsDarkChk = document.getElementById("copyAnnotationsDarkChk");
+      copyAnnotationsDarkChk.checked = copyAnnotationsDark;
+      copyAnnotationsDarkChk.addEventListener("change", () => {
+        copyAnnotationsDark = copyAnnotationsDarkChk.checked;
+        parent.postMessage({ pluginMessage: { type: "saveCopyAnnotationsDark", value: copyAnnotationsDark } }, "*");
       });
 
       // Live drag-and-drop reordering (внутри основного ряда, отключено в режиме настройки)

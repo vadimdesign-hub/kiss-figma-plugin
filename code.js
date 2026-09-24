@@ -188,9 +188,10 @@ case "doneTag":
       const savedHeightDelta = await figma.clientStorage.getAsync("heightDelta");
       const savedGroupWidthDelta = await figma.clientStorage.getAsync("groupWidthDelta");
       const savedSectionGap = await figma.clientStorage.getAsync("sectionGap");
+      const savedCopyAnnotationsDark = await figma.clientStorage.getAsync("copyAnnotationsDark");
       const initHeight = savedDynamic === "dynamic" ? 33 : 58;
       figma.showUI(__html__, { width: 320, height: initHeight, title: "Kiss" });
-      figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null, savedSectionGap: typeof savedSectionGap === "number" ? savedSectionGap : null });
+      figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null, savedSectionGap: typeof savedSectionGap === "number" ? savedSectionGap : null, savedCopyAnnotationsDark: savedCopyAnnotationsDark === true });
       checkFrameSelected();
     })();
     break;
@@ -281,6 +282,10 @@ figma.ui.onmessage = async (msg) => {
     await figma.clientStorage.setAsync("sectionGap", msg.value);
     return;
   }
+  if (msg.type === "saveCopyAnnotationsDark") {
+    await figma.clientStorage.setAsync("copyAnnotationsDark", msg.value);
+    return;
+  }
   if (msg.type === "settingsDone") {
     figma.notify("Настройки применены ✅");
     // Reopen toolbar
@@ -296,9 +301,10 @@ figma.ui.onmessage = async (msg) => {
     const savedHeightDelta = await figma.clientStorage.getAsync("heightDelta");
     const savedGroupWidthDelta = await figma.clientStorage.getAsync("groupWidthDelta");
     const savedSectionGap = await figma.clientStorage.getAsync("sectionGap");
+    const savedCopyAnnotationsDark = await figma.clientStorage.getAsync("copyAnnotationsDark");
     const initHeight = savedDynamic === "dynamic" ? 33 : 58;
     figma.showUI(__html__, { width: 320, height: initHeight, title: "Kiss" });
-    figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null, savedSectionGap: typeof savedSectionGap === "number" ? savedSectionGap : null });
+    figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null, savedSectionGap: typeof savedSectionGap === "number" ? savedSectionGap : null, savedCopyAnnotationsDark: savedCopyAnnotationsDark === true });
     return;
   }
   if (msg.type === "translationResult") {
@@ -453,6 +459,8 @@ async function autoSectionAlign(withKeyboard = false) {
     await new Promise(r => setTimeout(r, 100));
   }
 
+  const copyAnnotationsDark = (await figma.clientStorage.getAsync("copyAnnotationsDark")) === true;
+
   function getFrames(nodes) {
     return nodes.filter(
       c => c.type === "FRAME" ||
@@ -543,6 +551,19 @@ async function autoSectionAlign(withKeyboard = false) {
       }
     }
 
+    // Клон целиком копирует и родные аннотации Figma на каждом узле — по
+    // умолчанию их не хотим дублировать во втором (тёмном) ряду, поэтому
+    // рекурсивно проходим по клону и чистим .annotations на всех узлах,
+    // где они поддерживаются.
+    function clearAnnotations(node) {
+      if ("annotations" in node && node.annotations && node.annotations.length > 0) {
+        try { node.annotations = []; } catch (e) {}
+      }
+      if ("children" in node) {
+        node.children.forEach(child => clearAnnotations(child));
+      }
+    }
+
     frames.forEach(frame => {
       const clone = frame.clone();
       clone.x = frame.x;
@@ -552,6 +573,7 @@ async function autoSectionAlign(withKeyboard = false) {
         clone.setExplicitVariableModeForCollection(kissCollection, darkMode.modeId);
       }
       if (withKeyboard) switchKeyboardsToDark(clone);
+      if (!copyAnnotationsDark) clearAnnotations(clone);
       clones.push(clone);
     });
 
