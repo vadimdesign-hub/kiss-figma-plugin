@@ -14,7 +14,18 @@ let archiveReturnViewportZoom = null;    // ...и зум, чтобы верну�
 function tryClose() { if (!keepAlive) figma.closePlugin(); }
 
 function checkFrameSelected() {
-  const sel = figma.currentPage.selection;
+  let sel;
+  try {
+    sel = figma.currentPage.selection;
+  } catch (e) {
+    // Figma иногда на короткое время хранит в выделении id уже удалённого узла
+    // (гонка между внутренним состоянием движка и деревом документа — заметнее
+    // в файлах с активным совместным редактированием). Чтение .selection в
+    // этот момент кидает "in get_selection: The node with id ... does not
+    // exist". Ничего не делаем — со следующим selectionchange придёт уже
+    // консистентное состояние.
+    return;
+  }
   const hasFrame = sel.length === 1 && (sel[0].type === "FRAME" || sel[0].type === "COMPONENT" || sel[0].type === "INSTANCE") && sel[0].parent && sel[0].parent.type === "SECTION";
   const selectedSectionCount = sel.filter(n => n.type === "SECTION" && n.visible !== false && !n.locked).length;
   figma.ui.postMessage({ type: "frameSelected", value: hasFrame, multiSections: selectedSectionCount >= 2 });
@@ -22,7 +33,12 @@ function checkFrameSelected() {
 
 figma.on("selectionchange", () => {
   if (!keepAlive) return;
-  const sel = figma.currentPage.selection;
+  let sel;
+  try {
+    sel = figma.currentPage.selection;
+  } catch (e) {
+    return;
+  }
   const curIds = new Set(sel.map(n => n.id));
 
   // Находим новые элементы (которых не было в предыдущем выделении)
