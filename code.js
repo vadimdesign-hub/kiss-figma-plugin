@@ -77,38 +77,32 @@ const AUTO_LAYOUT_GAP = 80;
 const AUTO_FIT_DEBOUNCE_MS = 200;
 const AUTO_FIT_EPSILON = 0.5;     // чтобы не зациклиться на дрожании в доли пикселя
 
-// «Авто layout внутри секции» — раскладывает прямых детей секции в
-// строки (по вертикальному пересечению bounding box'ов — элементы одной
-// визуальной строки перекрываются по Y, даже если их высота отличается),
-// затем внутри каждой строки выставляет между соседями ровно
-// AUTO_LAYOUT_GAP по X, а между строками — ровно AUTO_LAYOUT_GAP по Y.
-// Все строки выравниваются по общему левому краю (самому левому из всех
-// детей) — получается аккуратная сетка с равными отступами что по
-// горизонтали, что по вертикали, вместо разнобоя.
-//
-// ВАЖНО: если среди текущих детей есть хотя бы один, которого не было в
-// прошлый раз (только что перетащили внутрь секции извне) — переклад не
-// запускаем вообще, просто запоминаем новый состав. Иначе внесённый
-// объект тянет за собой пересчёт кластеризации по строкам и может слить
-// существующие ряды в один/перестроить их — а нужно ровно наоборот:
-// существующая раскладка не трогается, новый объект просто остаётся там,
-// где его положили (секция вокруг него подрастёт через «Автоподгонку»,
-// если она включена). Реальный переклад отступов происходит только когда
-// двигают/ресайзят объект, который уже был частью секции.
+// «Авто layout внутри секции» — устоявшиеся (уже виденные раньше) дети
+// секции НИКОГДА не трогаются: ни порядок, ни позиция не меняются, что
+// бы с ними ни происходило — даже если один из них увели в дальний угол.
+// Единственное, что делает эта функция — пристраивает НОВЫХ детей
+// (которых не было в прошлый раз, только что затащили в секцию извне)
+// в конец ближайшего по Y существующего ряда, с отступом AUTO_LAYOUT_GAP
+// от последнего элемента этого ряда, чтобы они не наезжали друг на
+// друга и на остальной контент. Ряды при этом строятся ТОЛЬКО по старым
+// детям — это и есть неприкосновенный эталон структуры.
 function reflowSectionChildrenGap(section) {
   const kids = section.children.filter(c => c.visible !== false);
 
   const knownIds = autoLayoutKnownChildren.get(section.id) || new Set();
-  const currentIds = new Set(kids.map(n => n.id));
-  const hasNewChild = kids.some(n => !knownIds.has(n.id));
-  autoLayoutKnownChildren.set(section.id, currentIds);
+  const oldKids = kids.filter(k => knownIds.has(k.id));
+  const newKids = kids.filter(k => !knownIds.has(k.id));
 
-  if (hasNewChild) return;
-  if (kids.length < 2) return;
+  autoLayoutKnownChildren.set(section.id, new Set(kids.map(n => n.id)));
 
-  const sorted = [...kids].sort((a, b) => a.y - b.y);
+  // Либо ничего нового не появилось (тогда трогать вообще нечего — даже
+  // если кто-то из старых просто переместился), либо это первый проход
+  // и эталонной структуры ещё нет, подстраивать новых не подо что.
+  if (newKids.length === 0 || oldKids.length === 0) return;
+
+  const sortedOld = [...oldKids].sort((a, b) => a.y - b.y);
   const rows = [];
-  sorted.forEach(node => {
+  sortedOld.forEach(node => {
     const top = node.y, bottom = node.y + node.height;
     const row = rows.find(r => top < r.bottom && bottom > r.top);
     if (row) {
@@ -121,22 +115,26 @@ function reflowSectionChildrenGap(section) {
   });
   rows.sort((a, b) => a.top - b.top);
 
-  const leftAnchor = Math.min(...kids.map(n => n.x));
-  let cursorY = rows[0].top;
-
   autoFitBusy = true;
   try {
-    rows.forEach(row => {
-      row.items.sort((a, b) => a.x - b.x);
-      let cursorX = leftAnchor;
-      let rowMaxHeight = 0;
-      row.items.forEach(node => {
-        if (Math.abs(node.x - cursorX) > AUTO_FIT_EPSILON) node.x = cursorX;
-        if (Math.abs(node.y - cursorY) > AUTO_FIT_EPSILON) node.y = cursorY;
-        cursorX += node.width + AUTO_LAYOUT_GAP;
-        rowMaxHeight = Math.max(rowMaxHeight, node.height);
-      });
-      cursorY += rowMaxHeight + AUTO_LAYOUT_GAP;
+    const sortedNew = [...newKids].sort((a, b) => a.y - b.y || a.x - b.x);
+    sortedNew.forEach(node => {
+      // Ряд, с которым новый объект визуально пересекается по Y; если
+      // таких нет — ближайший по расстоянию между центрами.
+      let targetRow = rows.find(r => node.y < r.bottom && (node.y + node.height) > r.top);
+      if (!targetRow) {
+        const nodeCenter = node.y + node.height / 2;
+        let bestDist = Infinity;
+        rows.forEach(r => {
+          const dist = Math.abs(nodeCenter - (r.top + r.bottom) / 2);
+          if (dist < bestDist) { bestDist = dist; targetRow = r; }
+        });
+      }
+      const rowRight = Math.max(...targetRow.items.map(n => n.x + n.width));
+      node.x = rowRight + AUTO_LAYOUT_GAP;
+      node.y = targetRow.top;
+      targetRow.items.push(node);
+      targetRow.bottom = Math.max(targetRow.bottom, node.y + node.height);
     });
   } catch (e) {
   } finally {
