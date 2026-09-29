@@ -1031,6 +1031,7 @@
       border: 1px solid var(--tray-border);
       border-radius: 999px;
       transition: background 0.15s, border-color 0.15s;
+      pointer-events: none; /* иначе трек (он позже input в DOM, значит поверх) перехватывает клик до чекбокса под ним */
     }
     .ag-switch-track::before {
       content: "";
