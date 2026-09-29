@@ -71,38 +71,21 @@ let autoLayoutInsideSection = false; // доп. настройка — норм�
 let autoFitBusy = false;          // true пока сами меняем секцию/детей — чтобы не словить свой же documentchange как повод пересчитать ещё раз
 let autoFitTimer = null;          // дебаунс: во время live-резайза documentchange сыплется очень часто
 let autoFitPendingSections = new Set();
-let autoLayoutKnownChildren = new Map(); // sectionId -> Set(childId) — кого уже видели в этой секции
+let autoLayoutRowAssignment = new Map(); // sectionId -> Map(childId -> rowKey) — устойчивая привязка ребёнка к «своему» ряду
 const AUTO_FIT_PADDING = 100;
 const AUTO_LAYOUT_GAP = 80;
 const AUTO_FIT_DEBOUNCE_MS = 200;
 const AUTO_FIT_EPSILON = 0.5;     // чтобы не зациклиться на дрожании в доли пикселя
 
-// «Авто layout внутри секции» — устоявшиеся (уже виденные раньше) дети
-// секции НИКОГДА не трогаются: ни порядок, ни позиция не меняются, что
-// бы с ними ни происходило — даже если один из них увели в дальний угол.
-// Единственное, что делает эта функция — пристраивает НОВЫХ детей
-// (которых не было в прошлый раз, только что затащили в секцию извне)
-// в конец ближайшего по Y существующего ряда, с отступом AUTO_LAYOUT_GAP
-// от последнего элемента этого ряда, чтобы они не наезжали друг на
-// друга и на остальной контент. Ряды при этом строятся ТОЛЬКО по старым
-// детям — это и есть неприкосновенный эталон структуры.
-function reflowSectionChildrenGap(section) {
-  const kids = section.children.filter(c => c.visible !== false);
-
-  const knownIds = autoLayoutKnownChildren.get(section.id) || new Set();
-  const oldKids = kids.filter(k => knownIds.has(k.id));
-  const newKids = kids.filter(k => !knownIds.has(k.id));
-
-  autoLayoutKnownChildren.set(section.id, new Set(kids.map(n => n.id)));
-
-  // Либо ничего нового не появилось (тогда трогать вообще нечего — даже
-  // если кто-то из старых просто переместился), либо это первый проход
-  // и эталонной структуры ещё нет, подстраивать новых не подо что.
-  if (newKids.length === 0 || oldKids.length === 0) return;
-
-  const sortedOld = [...oldKids].sort((a, b) => a.y - b.y);
+// Кластеризует набор узлов в ряды по вертикальному пересечению bounding
+// box'ов. Используется только для ПЕРВОНАЧАЛЬНОЙ классификации (когда для
+// секции ещё нет сохранённой привязки к рядам) — дальше ряд каждого
+// ребёнка запоминается и заново геометрией не выводится, чтобы случайный
+// «мостовой» объект не мог задним числом слить два ряда в один.
+function clusterByYOverlap(nodes) {
+  const sorted = [...nodes].sort((a, b) => a.y - b.y);
   const rows = [];
-  sortedOld.forEach(node => {
+  sorted.forEach(node => {
     const top = node.y, bottom = node.y + node.height;
     const row = rows.find(r => top < r.bottom && bottom > r.top);
     if (row) {
@@ -113,28 +96,95 @@ function reflowSectionChildrenGap(section) {
       rows.push({ items: [node], top, bottom });
     }
   });
+  return rows;
+}
+
+// «Авто layout внутри секции» — при любом изменении (двинули/добавили)
+// пересобирает раскладку прямых детей секции так, чтобы между соседями
+// по строке было ровно AUTO_LAYOUT_GAP по X, а между строками — ровно
+// AUTO_LAYOUT_GAP по Y (все строки — по общему левому краю). Это
+// настоящий переклад: если что-то вставили в середину ряда — всё, что
+// правее, сдвигается.
+//
+// Но при этом принадлежность ребёнка «своему» ряду один раз определяется
+// и дальше запоминается (autoLayoutRowAssignment), а не выводится заново
+// из геометрии на каждый вызов. Иначе один объект, чей Y-диапазон случайно
+// перекрывает сразу два соседних ряда (например поставили что-то повыше
+// между ними), задним числом слил бы их в один — то есть сетка 2×N могла
+// бы превратиться в один длинный ряд. С запоминанием ряды остаются такими,
+// какими сложились изначально: новый ребёнок присоединяется к ближайшему
+// существующему ряду (по пересечению, а если такого нет — по ближайшему
+// центру), но уже устоявшиеся ряды друг с другом никогда не сливаются.
+function reflowSectionChildrenGap(section) {
+  const kids = section.children.filter(c => c.visible !== false);
+  if (kids.length === 0) { autoLayoutRowAssignment.delete(section.id); return; }
+
+  let rowMap = autoLayoutRowAssignment.get(section.id);
+  if (!rowMap) { rowMap = new Map(); autoLayoutRowAssignment.set(section.id, rowMap); }
+
+  // Забываем тех, кого в секции больше нет (удалили/вынесли).
+  for (const id of Array.from(rowMap.keys())) {
+    if (!kids.some(k => k.id === id)) rowMap.delete(id);
+  }
+
+  const known = kids.filter(k => rowMap.has(k.id));
+  const fresh = kids.filter(k => !rowMap.has(k.id));
+
+  if (fresh.length > 0) {
+    if (known.length === 0) {
+      // Опорной структуры ещё нет — классифицируем всё с нуля.
+      clusterByYOverlap(fresh).forEach((row, idx) => {
+        row.items.forEach(n => rowMap.set(n.id, idx));
+      });
+    } else {
+      // Каждого нового — в ближайший СУЩЕСТВУЮЩИЙ ряд, не пересчитывая
+      // остальные. Ряды сравниваем по их ТЕКУЩИМ границам (по факту
+      // текущих позиций участников), но сами эти границы не расширяем.
+      let nextRowKey = Math.max(...Array.from(rowMap.values())) + 1;
+      const existingRowKeys = Array.from(new Set(rowMap.values()));
+      const sortedFresh = [...fresh].sort((a, b) => (a.y + a.height / 2) - (b.y + b.height / 2));
+      sortedFresh.forEach(node => {
+        const nodeTop = node.y, nodeBottom = node.y + node.height;
+        const nodeCenter = node.y + node.height / 2;
+        let overlapKey = null, nearestKey = null, nearestDist = Infinity;
+        existingRowKeys.forEach(key => {
+          const members = kids.filter(k => rowMap.get(k.id) === key);
+          if (members.length === 0) return;
+          const top = Math.min(...members.map(n => n.y));
+          const bottom = Math.max(...members.map(n => n.y + n.height));
+          if (overlapKey === null && nodeTop < bottom && nodeBottom > top) overlapKey = key;
+          const dist = Math.abs(nodeCenter - (top + bottom) / 2);
+          if (dist < nearestDist) { nearestDist = dist; nearestKey = key; }
+        });
+        const assignedKey = overlapKey !== null ? overlapKey : nearestKey;
+        rowMap.set(node.id, assignedKey !== null ? assignedKey : nextRowKey++);
+      });
+    }
+  }
+
+  // ---- полный переклад по текущей (устойчивой) привязке к рядам ----
+  const rowKeys = Array.from(new Set(kids.map(k => rowMap.get(k.id))));
+  const rows = rowKeys.map(key => {
+    const items = kids.filter(k => rowMap.get(k.id) === key);
+    return { items, top: Math.min(...items.map(n => n.y)) };
+  });
   rows.sort((a, b) => a.top - b.top);
 
   autoFitBusy = true;
   try {
-    const sortedNew = [...newKids].sort((a, b) => a.y - b.y || a.x - b.x);
-    sortedNew.forEach(node => {
-      // Ряд, с которым новый объект визуально пересекается по Y; если
-      // таких нет — ближайший по расстоянию между центрами.
-      let targetRow = rows.find(r => node.y < r.bottom && (node.y + node.height) > r.top);
-      if (!targetRow) {
-        const nodeCenter = node.y + node.height / 2;
-        let bestDist = Infinity;
-        rows.forEach(r => {
-          const dist = Math.abs(nodeCenter - (r.top + r.bottom) / 2);
-          if (dist < bestDist) { bestDist = dist; targetRow = r; }
-        });
-      }
-      const rowRight = Math.max(...targetRow.items.map(n => n.x + n.width));
-      node.x = rowRight + AUTO_LAYOUT_GAP;
-      node.y = targetRow.top;
-      targetRow.items.push(node);
-      targetRow.bottom = Math.max(targetRow.bottom, node.y + node.height);
+    const leftAnchor = Math.min(...kids.map(n => n.x));
+    let cursorY = rows[0].top;
+    rows.forEach(row => {
+      row.items.sort((a, b) => a.x - b.x);
+      let cursorX = leftAnchor;
+      let rowMaxHeight = 0;
+      row.items.forEach(node => {
+        if (Math.abs(node.x - cursorX) > AUTO_FIT_EPSILON) node.x = cursorX;
+        if (Math.abs(node.y - cursorY) > AUTO_FIT_EPSILON) node.y = cursorY;
+        cursorX += node.width + AUTO_LAYOUT_GAP;
+        rowMaxHeight = Math.max(rowMaxHeight, node.height);
+      });
+      cursorY += rowMaxHeight + AUTO_LAYOUT_GAP;
     });
   } catch (e) {
   } finally {
