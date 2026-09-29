@@ -67,12 +67,64 @@ figma.on("selectionchange", () => {
 // стал больше нужного. Каждая сторона обрабатывается независимо — если
 // с одной стороны всё уже верно, её не трогаем.
 let experimentalAutoResize = false;
+let autoLayoutInsideSection = false; // доп. настройка — нормализует отступы МЕЖДУ детьми секции к AUTO_LAYOUT_GAP
 let autoFitBusy = false;          // true пока сами меняем секцию/детей — чтобы не словить свой же documentchange как повод пересчитать ещё раз
 let autoFitTimer = null;          // дебаунс: во время live-резайза documentchange сыплется очень часто
 let autoFitPendingSections = new Set();
 const AUTO_FIT_PADDING = 100;
+const AUTO_LAYOUT_GAP = 80;
 const AUTO_FIT_DEBOUNCE_MS = 200;
 const AUTO_FIT_EPSILON = 0.5;     // чтобы не зациклиться на дрожании в доли пикселя
+
+// «Авто layout внутри секции» — раскладывает прямых детей секции в
+// строки (по вертикальному пересечению bounding box'ов — элементы одной
+// визуальной строки перекрываются по Y, даже если их высота отличается),
+// затем внутри каждой строки выставляет между соседями ровно
+// AUTO_LAYOUT_GAP по X, а между строками — ровно AUTO_LAYOUT_GAP по Y.
+// Все строки выравниваются по общему левому краю (самому левому из всех
+// детей) — получается аккуратная сетка с равными отступами что по
+// горизонтали, что по вертикали, вместо разнобоя.
+function reflowSectionChildrenGap(section) {
+  const kids = section.children.filter(c => c.visible !== false);
+  if (kids.length < 2) return;
+
+  const sorted = [...kids].sort((a, b) => a.y - b.y);
+  const rows = [];
+  sorted.forEach(node => {
+    const top = node.y, bottom = node.y + node.height;
+    const row = rows.find(r => top < r.bottom && bottom > r.top);
+    if (row) {
+      row.items.push(node);
+      row.top = Math.min(row.top, top);
+      row.bottom = Math.max(row.bottom, bottom);
+    } else {
+      rows.push({ items: [node], top, bottom });
+    }
+  });
+  rows.sort((a, b) => a.top - b.top);
+
+  const leftAnchor = Math.min(...kids.map(n => n.x));
+  let cursorY = rows[0].top;
+
+  autoFitBusy = true;
+  try {
+    rows.forEach(row => {
+      row.items.sort((a, b) => a.x - b.x);
+      let cursorX = leftAnchor;
+      let rowMaxHeight = 0;
+      row.items.forEach(node => {
+        if (Math.abs(node.x - cursorX) > AUTO_FIT_EPSILON) node.x = cursorX;
+        if (Math.abs(node.y - cursorY) > AUTO_FIT_EPSILON) node.y = cursorY;
+        cursorX += node.width + AUTO_LAYOUT_GAP;
+        rowMaxHeight = Math.max(rowMaxHeight, node.height);
+      });
+      cursorY += rowMaxHeight + AUTO_LAYOUT_GAP;
+    });
+  } catch (e) {
+  } finally {
+    autoFitBusy = false;
+  }
+}
 
 function autoFitSectionToChildren(section) {
   if (!section || section.removed || section.type !== "SECTION") return;
@@ -139,7 +191,7 @@ function autoFitSectionToChildren(section) {
 }
 
 figma.on("documentchange", (event) => {
-  if (!keepAlive || !experimentalAutoResize || autoFitBusy) return;
+  if (!keepAlive || (!experimentalAutoResize && !autoLayoutInsideSection) || autoFitBusy) return;
 
   for (const change of event.documentChanges) {
     if (change.type !== "PROPERTY_CHANGE" || change.origin !== "LOCAL") continue;
@@ -156,7 +208,13 @@ figma.on("documentchange", (event) => {
     autoFitTimer = null;
     const sections = Array.from(autoFitPendingSections);
     autoFitPendingSections.clear();
-    sections.forEach(autoFitSectionToChildren);
+    // Сначала нормализуем отступы между детьми (если включено) — это
+    // меняет их общий bounding box, — и только потом подгоняем поля
+    // самой секции под уже обновлённый контент (если включено).
+    sections.forEach(section => {
+      if (autoLayoutInsideSection) reflowSectionChildrenGap(section);
+      if (experimentalAutoResize) autoFitSectionToChildren(section);
+    });
   }, AUTO_FIT_DEBOUNCE_MS);
 });
 
@@ -294,9 +352,11 @@ case "doneTag":
       const savedCopyAnnotationsDark = await figma.clientStorage.getAsync("copyAnnotationsDark");
       const savedExperimentalAutoResize = await figma.clientStorage.getAsync("experimentalAutoResize");
       experimentalAutoResize = savedExperimentalAutoResize === true;
+      const savedAutoLayoutInsideSection = await figma.clientStorage.getAsync("autoLayoutInsideSection");
+      autoLayoutInsideSection = savedAutoLayoutInsideSection === true;
       const initHeight = savedDynamic === "dynamic" ? 33 : 58;
       figma.showUI(__html__, { width: 320, height: initHeight, title: "Kiss" });
-      figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null, savedSectionGap: typeof savedSectionGap === "number" ? savedSectionGap : null, savedCopyAnnotationsDark: savedCopyAnnotationsDark === true, savedExperimentalAutoResize: experimentalAutoResize });
+      figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null, savedSectionGap: typeof savedSectionGap === "number" ? savedSectionGap : null, savedCopyAnnotationsDark: savedCopyAnnotationsDark === true, savedExperimentalAutoResize: experimentalAutoResize, savedAutoLayoutInsideSection: autoLayoutInsideSection });
       checkFrameSelected();
     })();
     break;
@@ -396,6 +456,11 @@ figma.ui.onmessage = async (msg) => {
     await figma.clientStorage.setAsync("experimentalAutoResize", msg.value);
     return;
   }
+  if (msg.type === "saveAutoLayoutInsideSection") {
+    autoLayoutInsideSection = msg.value === true;
+    await figma.clientStorage.setAsync("autoLayoutInsideSection", msg.value);
+    return;
+  }
   if (msg.type === "settingsDone") {
     figma.notify("Настройки применены ✅");
     // Reopen toolbar
@@ -414,9 +479,11 @@ figma.ui.onmessage = async (msg) => {
     const savedCopyAnnotationsDark = await figma.clientStorage.getAsync("copyAnnotationsDark");
     const savedExperimentalAutoResize = await figma.clientStorage.getAsync("experimentalAutoResize");
     experimentalAutoResize = savedExperimentalAutoResize === true;
+    const savedAutoLayoutInsideSection = await figma.clientStorage.getAsync("autoLayoutInsideSection");
+    autoLayoutInsideSection = savedAutoLayoutInsideSection === true;
     const initHeight = savedDynamic === "dynamic" ? 33 : 58;
     figma.showUI(__html__, { width: 320, height: initHeight, title: "Kiss" });
-    figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null, savedSectionGap: typeof savedSectionGap === "number" ? savedSectionGap : null, savedCopyAnnotationsDark: savedCopyAnnotationsDark === true, savedExperimentalAutoResize: experimentalAutoResize });
+    figma.ui.postMessage({ type: "toolbar", savedOrder: savedOrder || null, savedIconStyle: savedIconStyle || null, savedTheme: savedTheme || null, savedExpandChkR: savedExpandChkR !== undefined ? savedExpandChkR : null, savedExpandChkL: savedExpandChkL !== undefined ? savedExpandChkL : null, savedDynamic: savedDynamic || "normal", savedHidden: savedHidden || [], savedVisibleCount: typeof savedVisibleCount === "number" ? savedVisibleCount : null, savedWidthDelta: typeof savedWidthDelta === "number" ? savedWidthDelta : null, savedHeightDelta: typeof savedHeightDelta === "number" ? savedHeightDelta : null, savedGroupWidthDelta: typeof savedGroupWidthDelta === "number" ? savedGroupWidthDelta : null, savedSectionGap: typeof savedSectionGap === "number" ? savedSectionGap : null, savedCopyAnnotationsDark: savedCopyAnnotationsDark === true, savedExperimentalAutoResize: experimentalAutoResize, savedAutoLayoutInsideSection: autoLayoutInsideSection });
     return;
   }
   if (msg.type === "translationResult") {
