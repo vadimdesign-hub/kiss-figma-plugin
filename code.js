@@ -71,6 +71,7 @@ let autoLayoutInsideSection = false; // доп. настройка — норм�
 let autoFitBusy = false;          // true пока сами меняем секцию/детей — чтобы не словить свой же documentchange как повод пересчитать ещё раз
 let autoFitTimer = null;          // дебаунс: во время live-резайза documentchange сыплется очень часто
 let autoFitPendingSections = new Set();
+let autoLayoutKnownChildren = new Map(); // sectionId -> Set(childId) — кого уже видели в этой секции
 const AUTO_FIT_PADDING = 100;
 const AUTO_LAYOUT_GAP = 80;
 const AUTO_FIT_DEBOUNCE_MS = 200;
@@ -84,8 +85,25 @@ const AUTO_FIT_EPSILON = 0.5;     // чтобы не зациклиться на
 // Все строки выравниваются по общему левому краю (самому левому из всех
 // детей) — получается аккуратная сетка с равными отступами что по
 // горизонтали, что по вертикали, вместо разнобоя.
+//
+// ВАЖНО: если среди текущих детей есть хотя бы один, которого не было в
+// прошлый раз (только что перетащили внутрь секции извне) — переклад не
+// запускаем вообще, просто запоминаем новый состав. Иначе внесённый
+// объект тянет за собой пересчёт кластеризации по строкам и может слить
+// существующие ряды в один/перестроить их — а нужно ровно наоборот:
+// существующая раскладка не трогается, новый объект просто остаётся там,
+// где его положили (секция вокруг него подрастёт через «Автоподгонку»,
+// если она включена). Реальный переклад отступов происходит только когда
+// двигают/ресайзят объект, который уже был частью секции.
 function reflowSectionChildrenGap(section) {
   const kids = section.children.filter(c => c.visible !== false);
+
+  const knownIds = autoLayoutKnownChildren.get(section.id) || new Set();
+  const currentIds = new Set(kids.map(n => n.id));
+  const hasNewChild = kids.some(n => !knownIds.has(n.id));
+  autoLayoutKnownChildren.set(section.id, currentIds);
+
+  if (hasNewChild) return;
   if (kids.length < 2) return;
 
   const sorted = [...kids].sort((a, b) => a.y - b.y);
