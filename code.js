@@ -60,11 +60,12 @@ figma.on("selectionchange", () => {
 // ============================
 // Экспериментальный режим — автоподгонка секции под контент
 // ============================
-// Если внутри секции прямой дочерний фрейм/компонент/инстанс вырос (или
-// сдвинулся) так, что перестал помещаться с отступом AUTO_FIT_PADDING —
-// секция сама подрастает ровно настолько, чтобы отступ восстановился,
-// причём только с той стороны, где реально не хватило места (остальные
-// стороны не трогаем, даже если там отступ больше 100).
+// Если внутри секции прямой дочерний фрейм/компонент/инстанс вырос,
+// сжался или сдвинулся так, что отступ от какого-то края секции перестал
+// быть ровно AUTO_FIT_PADDING — секция сама подстраивается по этой
+// стороне: растёт, если отступа не хватило, и сжимается, если отступ
+// стал больше нужного. Каждая сторона обрабатывается независимо — если
+// с одной стороны всё уже верно, её не трогаем.
 let experimentalAutoResize = false;
 let autoFitBusy = false;          // true пока сами меняем секцию/детей — чтобы не словить свой же documentchange как повод пересчитать ещё раз
 let autoFitTimer = null;          // дебаунс: во время live-резайза documentchange сыплется очень часто
@@ -92,27 +93,34 @@ function autoFitSectionToChildren(section) {
   const rightPad = section.width - maxX;
   const bottomPad = section.height - maxY;
 
-  const needLeft = leftPad < AUTO_FIT_PADDING - AUTO_FIT_EPSILON;
-  const needTop = topPad < AUTO_FIT_PADDING - AUTO_FIT_EPSILON;
-  const needRight = rightPad < AUTO_FIT_PADDING - AUTO_FIT_EPSILON;
-  const needBottom = bottomPad < AUTO_FIT_PADDING - AUTO_FIT_EPSILON;
+  // Не только рост при нехватке места, но и обратное — если отступ стал
+  // БОЛЬШЕ 100 (например что-то подвинули к центру секции), сторону тоже
+  // подгоняем, но уже в минус, чтобы отступ всегда оставался ровно 100.
+  const adjustLeft = Math.abs(leftPad - AUTO_FIT_PADDING) > AUTO_FIT_EPSILON;
+  const adjustTop = Math.abs(topPad - AUTO_FIT_PADDING) > AUTO_FIT_EPSILON;
+  const adjustRight = Math.abs(rightPad - AUTO_FIT_PADDING) > AUTO_FIT_EPSILON;
+  const adjustBottom = Math.abs(bottomPad - AUTO_FIT_PADDING) > AUTO_FIT_EPSILON;
 
-  if (!needLeft && !needTop && !needRight && !needBottom) return;
+  if (!adjustLeft && !adjustTop && !adjustRight && !adjustBottom) return;
 
-  const shiftX = needLeft ? (AUTO_FIT_PADDING - leftPad) : 0;
-  const shiftY = needTop ? (AUTO_FIT_PADDING - topPad) : 0;
-  const extraRight = needRight ? (AUTO_FIT_PADDING - rightPad) : 0;
-  const extraBottom = needBottom ? (AUTO_FIT_PADDING - bottomPad) : 0;
+  // Каждая дельта — со знаком: положительная растит эту сторону (отступа не
+  // хватало), отрицательная сжимает (отступа было больше 100).
+  const shiftX = adjustLeft ? (AUTO_FIT_PADDING - leftPad) : 0;
+  const shiftY = adjustTop ? (AUTO_FIT_PADDING - topPad) : 0;
+  const extraRight = adjustRight ? (AUTO_FIT_PADDING - rightPad) : 0;
+  const extraBottom = adjustBottom ? (AUTO_FIT_PADDING - bottomPad) : 0;
 
   const newWidth = section.width + shiftX + extraRight;
   const newHeight = section.height + shiftY + extraBottom;
+  if (newWidth <= 0 || newHeight <= 0) return;
 
   autoFitBusy = true;
   try {
     if (shiftX || shiftY) {
-      // Растим влево/вверх: сдвигаем саму секцию в отрицательную сторону
-      // и компенсируем это сдвигом всех детей вправо/вниз на ту же
-      // величину — их абсолютная позиция на странице не меняется.
+      // Двигаем/растим или сжимаем слева/сверху: сдвигаем саму секцию на
+      // shiftX/shiftY (в минус — растёт влево/вверх, в плюс — сжимается)
+      // и компенсируем это обратным сдвигом всех детей, чтобы их
+      // абсолютная позиция на странице не менялась.
       section.x -= shiftX;
       section.y -= shiftY;
       section.resizeWithoutConstraints(newWidth, newHeight);
