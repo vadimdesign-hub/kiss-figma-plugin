@@ -77,16 +77,17 @@ const AUTO_FIT_EPSILON = 0.5;     // чтобы не зациклиться на
 function autoFitSectionToChildren(section) {
   if (!section || section.removed || section.type !== "SECTION") return;
 
-  const frames = section.children.filter(c =>
-    (c.type === "FRAME" || c.type === "INSTANCE" || c.type === "COMPONENT") &&
-    c.visible !== false
-  );
-  if (frames.length === 0) return;
+  // Границы считаем по ЛЮБЫМ прямым детям секции, а не только по
+  // фреймам/компонентам/инстансам — секция может содержать и голые
+  // прямоугольники, текст, векторы, группы и т.п., они тоже должны
+  // учитываться в отступах.
+  const kids = section.children.filter(c => c.visible !== false);
+  if (kids.length === 0) return;
 
-  const minX = Math.min(...frames.map(f => f.x));
-  const minY = Math.min(...frames.map(f => f.y));
-  const maxX = Math.max(...frames.map(f => f.x + f.width));
-  const maxY = Math.max(...frames.map(f => f.y + f.height));
+  const minX = Math.min(...kids.map(f => f.x));
+  const minY = Math.min(...kids.map(f => f.y));
+  const maxX = Math.max(...kids.map(f => f.x + f.width));
+  const maxY = Math.max(...kids.map(f => f.y + f.height));
 
   const leftPad = minX;
   const topPad = minY;
