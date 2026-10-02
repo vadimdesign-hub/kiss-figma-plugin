@@ -451,6 +451,37 @@ case "doneTag":
 // Вариантные свойства (Size, Color…) уходят параметрами prop_<Имя>=<значение>:
 // Search Agent сам отмечает по ним галочки в фильтрах. Булевы/текстовые
 // свойства компонента не передаём — в индексе их нет.
+// Шейп/вектор: в Search Agent уходит ТОЛЬКО его цвет (?color=HEX), без названия.
+// Цвет — самая верхняя видимая заливка, если она сплошная; если заливок нет
+// совсем (например линия или контурная иконка) — самая верхняя видимая
+// обводка. Градиент/картинка сплошным цветом не считаются.
+const SEARCH_AGENT_SHAPE_TYPES = new Set([
+  "VECTOR", "RECTANGLE", "ELLIPSE", "POLYGON", "STAR", "LINE", "BOOLEAN_OPERATION"
+]);
+
+function searchAgentTopSolidHex(paints) {
+  if (!Array.isArray(paints)) return null; // figma.mixed
+  for (let i = paints.length - 1; i >= 0; i--) {
+    const p = paints[i];
+    if (p.visible === false) continue;
+    if (p.type !== "SOLID") return null;
+    const to2 = v => Math.round(v * 255).toString(16).padStart(2, "0");
+    return (to2(p.color.r) + to2(p.color.g) + to2(p.color.b)).toUpperCase();
+  }
+  return undefined; // видимых слоёв нет вообще
+}
+
+function searchAgentShapeColor(node) {
+  try {
+    const fill = searchAgentTopSolidHex(node.fills);
+    if (fill) return fill;
+    if (fill === null) return null; // сверху градиент/картинка — это не «сплошной цвет»
+    return searchAgentTopSolidHex(node.strokes) || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 function searchAgentNameFor(node) {
   try {
     if (node.type === "INSTANCE") {
@@ -527,7 +558,17 @@ figma.ui.onmessage = async (msg) => {
       return;
     }
     if (sel.length > 1) figma.notify("Ищу по первому выделенному слою");
-    figma.openExternal(buildSearchAgentUrl(sel[0]));
+    const node = sel[0];
+    if (SEARCH_AGENT_SHAPE_TYPES.has(node.type)) {
+      const hex = searchAgentShapeColor(node);
+      if (hex) {
+        figma.notify("Ищу по цвету #" + hex);
+        figma.openExternal("http://127.0.0.1:8000/?color=" + hex);
+        return;
+      }
+      figma.notify("У слоя нет сплошного цвета — ищу по названию");
+    }
+    figma.openExternal(buildSearchAgentUrl(node));
     return;
   }
   if (msg.type === "saveOrder") {
