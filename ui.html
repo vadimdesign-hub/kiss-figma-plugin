@@ -3238,7 +3238,11 @@
       }
 
       const TRAY_LABEL_FALLBACK = { expandSectionLeft: "← Секция", expandSection: "→ Секция", tagGrid: "Метки", orderGroup: "Перед/зад" };
+      // «Метки» в трее — те же четыре цветных кружка, что и на самой панели
+      // (цвета совпадают с кнопками tagGrid), чтобы чип был узнаваем.
+      const TAG_DOTS_ICON = '<svg width="18" height="18" viewBox="0 0 18 18"><circle cx="5" cy="5" r="3.3" fill="#F59E0B"/><circle cx="13" cy="5" r="3.3" fill="#EF4444"/><circle cx="5" cy="13" r="3.3" fill="#22C55E"/><circle cx="13" cy="13" r="3.3" fill="#3B82F6"/></svg>';
       function trayIcon(t) {
+        if (t.command === "tagGrid") return TAG_DOTS_ICON;
         return (t.type === "grid" || t.type === "group") ? getIcon({ icon: IC.gridLayout, emojiIcon: "🔲" }) : getIcon(t);
       }
       function trayLabel(t) {
