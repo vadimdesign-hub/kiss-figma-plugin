@@ -680,22 +680,25 @@
       border: 1px solid var(--btn-blue-fg);
     }
 
-    /* "Search Agent" — AI-кнопка: плавно перетекающая градиентная "аврора"
-       из нескольких радиальных пятен (циан → розовый → фиолетовый → синий),
-       которые медленно дрейфуют. Цвет не зависит от светлой/тёмной темы. */
+    /* "Agent" — AI-кнопка в фиолетовой гамме. Пять слоёв, каждый дрейфует
+       со своей скоростью (разные background-size → параллакс): блик-«шёлк»
+       по диагонали, розово-фуксиевое и бирюзово-голубое пятна, индиго-тень и
+       конический «вихрь» из фиолетовых оттенков на базе насыщенного violet.
+       Цвет не зависит от светлой/тёмной темы. */
     .tool-btn.tool-btn-ai,
     .btn-preview-item.tool-btn-ai {
       --svg-stroke: #fff;
-      background-color: #4f46e5;
+      background-color: #5b21b6;
       background-image:
-        radial-gradient(circle at 14% 18%, #22d3ee 0%, rgba(34, 211, 238, 0) 55%),
-        radial-gradient(circle at 92% 8%, #f472b6 0%, rgba(244, 114, 182, 0) 52%),
-        radial-gradient(circle at 78% 96%, #a855f7 0%, rgba(168, 85, 247, 0) 58%),
-        radial-gradient(circle at 4% 92%, #3b82f6 0%, rgba(59, 130, 246, 0) 52%);
-      background-size: 230% 230%;
-      background-position: 0% 0%;
-      animation: aiAuroraShift 7s ease-in-out infinite alternate;
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 1px 6px rgba(139, 92, 246, 0.35);
+        linear-gradient(118deg, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0.30) 48%, rgba(255, 255, 255, 0) 64%),
+        radial-gradient(ellipse at 18% 82%, #e879f9 0%, rgba(232, 121, 249, 0) 58%),
+        radial-gradient(circle at 96% 10%, #38bdf8 0%, rgba(56, 189, 248, 0) 46%),
+        radial-gradient(circle at 72% 90%, #4338ca 0%, rgba(67, 56, 202, 0) 62%),
+        conic-gradient(from 205deg at 38% 62%, #7c3aed, #a21caf, #6d28d9, #4c1d95, #8b5cf6, #7c3aed);
+      background-size: 320% 100%, 240% 240%, 240% 240%, 240% 240%, 170% 170%;
+      background-position: 0% 0%, 0% 100%, 100% 0%, 100% 100%, 0% 50%;
+      animation: aiAuroraShift 8s ease-in-out infinite alternate;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24), 0 1px 7px rgba(124, 58, 237, 0.45);
     }
     .tool-btn.tool-btn-ai:hover { filter: brightness(1.12) saturate(1.15); }
     .tool-btn.tool-btn-ai .btn-label,
@@ -707,9 +710,9 @@
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
     }
     @keyframes aiAuroraShift {
-      0%   { background-position: 0% 0%; }
-      50%  { background-position: 100% 40%; }
-      100% { background-position: 40% 100%; }
+      0%   { background-position: 0% 0%,   0% 100%,  100% 0%,  100% 100%, 0% 50%; }
+      50%  { background-position: 60% 0%,  70% 20%,  30% 80%,  20% 40%,   60% 20%; }
+      100% { background-position: 100% 0%, 100% 0%,  0% 100%,  0% 0%,     100% 50%; }
     }
     @media (prefers-reduced-motion: reduce) {
       .tool-btn.tool-btn-ai,
@@ -1628,7 +1631,7 @@
       arrowDown: SVG('<path d="M9 3v11"/><path d="M4.5 9.5L9 14l4.5-4.5"/>'),
       archiveBox: SVG('<rect x="2" y="3" width="14" height="4" rx="1"/><path d="M3 7v6.5A1.5 1.5 0 004.5 15h9a1.5 1.5 0 001.5-1.5V7"/><line x1="7" y1="10" x2="11" y2="10"/>'),
       pin: SVG('<circle cx="9" cy="5.5" r="3"/><line x1="9" y1="8.5" x2="9" y2="16"/>'),
-      searchAI: SVG('<circle cx="7.5" cy="7.5" r="5"/><path d="M11.5 11.5L16 16"/><path d="M7.5 4.8l.75 1.95 1.95.75-1.95.75-.75 1.95-.75-1.95-1.95-.75 1.95-.75z" fill="var(--svg-stroke)" stroke-width="0.8"/>'),
+      sparkles: SVG('<path d="M7.5 3.2Q7.9 8.6 13.3 9Q7.9 9.4 7.5 14.8Q7.1 9.4 1.7 9Q7.1 8.6 7.5 3.2z" fill="var(--svg-stroke)" stroke-width="0.9"/><path d="M14 1.4Q14.2 3.3 16.1 3.5Q14.2 3.7 14 5.6Q13.8 3.7 11.9 3.5Q13.8 3.3 14 1.4z" fill="var(--svg-stroke)" stroke-width="0.6"/><path d="M14.4 12.2Q14.5 13.6 15.9 13.7Q14.5 13.8 14.4 15.2Q14.3 13.8 12.9 13.7Q14.3 13.6 14.4 12.2z" fill="var(--svg-stroke)" stroke-width="0.5"/>'),
       copy: SVG('<rect x="7" y="7" width="9" height="9" rx="1.8"/><path d="M4 11H3a1.8 1.8 0 01-1.8-1.8V3.8A1.8 1.8 0 013 2h6.2A1.8 1.8 0 0111 3.8V5"/>'),
     };
     const menu = [
@@ -1805,11 +1808,11 @@
         how: "Выдели один или несколько объектов и нажми «Copy» — ссылки на все объекты, по одной на строку, окажутся в буфере обмена."
       },
       {
-        icon: IC.searchAI, emojiIcon: "✨",
-        label: "Search Agent",
-        getPreview(s) { const i = s === "emoji" ? "✨" : IC.searchAI; return `<div class="btn-preview"><div class="btn-preview-item tool-btn-ai"><span class="bp-icon">${i}</span><span class="bp-label">Search Agent</span></div></div>`; },
+        icon: IC.sparkles, emojiIcon: "✨",
+        label: "Agent",
+        getPreview(s) { const i = s === "emoji" ? "✨" : IC.sparkles; return `<div class="btn-preview"><div class="btn-preview-item tool-btn-ai"><span class="bp-icon">${i}</span><span class="bp-label">Agent</span></div></div>`; },
         description: `Кнопка с переливающимся AI-градиентом. Берёт название выделенного слоя и открывает в браузере по умолчанию локальный инструмент поиска по макетам (<b>http://127.0.0.1:8000</b>) — сразу с этим названием в строке поиска.\n\nЕсли выделено несколько слоёв — ищет по первому из них (появится уведомление). Если ничего не выделено — подскажет выделить слой.\n\nСам плагин в сеть не ходит — просто открывает ссылку, поэтому отдельных разрешений не нужно. Если сервер инструмента не запущен, он стартует сам при открытии ссылки (служба автозапуска на порту 8000).`,
-        how: "Выдели слой (например инстанс кнопки) и нажми «Search Agent» — в браузере откроется страница поиска с названием слоя."
+        how: "Выдели слой (например инстанс кнопки) и нажми «Agent» — в браузере откроется страница поиска с названием слоя."
       },
       {
         icon: IC.gear, emojiIcon: "⚙️",
@@ -1886,7 +1889,7 @@
       { icon: IC.custom, emojiIcon: "✨", label: "QA", command: "runAgent" },
       { icon: IC.archiveBox, emojiIcon: "🗄️", label: "Архив", command: "archiveSelection" },
       { icon: IC.copy, emojiIcon: "📋", label: "Copy", command: "copyLinks" },
-      { icon: IC.searchAI, emojiIcon: "✨", label: "Search Agent", command: "searchAgent" },
+      { icon: IC.sparkles, emojiIcon: "✨", label: "Agent", command: "searchAgent" },
     ];
 
     let expandChkR = null, expandChkL = null;
