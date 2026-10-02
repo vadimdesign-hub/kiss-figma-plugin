@@ -1768,6 +1768,13 @@
         how: "Выдели один или несколько объектов и нажми «Copy» — ссылки на все объекты, по одной на строку, окажутся в буфере обмена."
       },
       {
+        icon: IC.search, emojiIcon: "🔎",
+        label: "Найти в Search Agent",
+        getPreview(s) { const i = s === "emoji" ? "🔎" : IC.search; return `<div class="btn-preview"><div class="btn-preview-item" style="width:128px"><span class="bp-icon">${i}</span><span class="bp-label">Найти в Search Agent</span></div></div>`; },
+        description: `Берёт название выделенного слоя и открывает в браузере по умолчанию локальный инструмент поиска по макетам (<b>http://127.0.0.1:8000</b>) — сразу с этим названием в строке поиска.\n\nЕсли выделено несколько слоёв — ищет по первому из них (появится уведомление). Если ничего не выделено — подскажет выделить слой.\n\nСам плагин в сеть не ходит — просто открывает ссылку, поэтому отдельных разрешений не нужно. Если сервер инструмента не запущен, он стартует сам при открытии ссылки (служба автозапуска на порту 8000).`,
+        how: "Выдели слой (например инстанс кнопки) и нажми «Найти в Search Agent» — в браузере откроется страница поиска с названием слоя."
+      },
+      {
         icon: IC.gear, emojiIcon: "⚙️",
         label: "Настройки (панель)",
         getPreview(s) { const i = s === "emoji" ? "⚙️" : IC.gear; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Настройки</span></div></div>`; },
@@ -1842,6 +1849,7 @@
       { icon: IC.custom, emojiIcon: "✨", label: "QA", command: "runAgent" },
       { icon: IC.archiveBox, emojiIcon: "🗄️", label: "Архив", command: "archiveSelection" },
       { icon: IC.copy, emojiIcon: "📋", label: "Copy", command: "copyLinks" },
+      { icon: IC.search, emojiIcon: "🔎", label: "Найти в Search Agent", command: "searchAgent", width: 128 },
     ];
 
     let expandChkR = null, expandChkL = null;
@@ -2832,6 +2840,10 @@
           compactChk = pchk;
           btn.addEventListener("click", () => {
             parent.postMessage({ pluginMessage: { type: "run", command: t.command, compact: pchk.checked, sectionGap } }, "*");
+          });
+        } else if (t.command === "searchAgent") {
+          btn.addEventListener("click", () => {
+            parent.postMessage({ pluginMessage: { type: "search-agent" } }, "*");
           });
         } else if (t.command === "runAgent") {
           btn.addEventListener("click", () => {

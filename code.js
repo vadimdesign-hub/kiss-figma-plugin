@@ -468,6 +468,17 @@ figma.ui.onmessage = async (msg) => {
     figma.notify(`🔗 Скопировано ссылок: ${msg.count} ✅`);
     return;
   }
+  if (msg.type === "search-agent") {
+    const sel = figma.currentPage.selection;
+    if (!sel || sel.length === 0) {
+      figma.notify("Выделите слой, чтобы найти его в Search Agent");
+      return;
+    }
+    if (sel.length > 1) figma.notify("Ищу по первому выделенному слою");
+    const name = sel[0].name.trim();
+    figma.openExternal("http://127.0.0.1:8000/?q=" + encodeURIComponent(name));
+    return;
+  }
   if (msg.type === "saveOrder") {
     await figma.clientStorage.setAsync("toolOrder", msg.order);
     return;
