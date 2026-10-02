@@ -442,6 +442,58 @@ case "doneTag":
     tryClose();
 }
 
+// ============================
+// Agent — ссылка на локальный Search Agent
+// ============================
+// Название: у инстанса ищем по названию КОМПОНЕНТА (у варианта из набора —
+// по названию набора), а не по слою: слой могли переименовать, а в индексе
+// Search Agent всё хранится под именем компонента. У остальных — имя слоя.
+// Вариантные свойства (Size, Color…) уходят параметрами prop_<Имя>=<значение>:
+// Search Agent сам отмечает по ним галочки в фильтрах. Булевы/текстовые
+// свойства компонента не передаём — в индексе их нет.
+function searchAgentNameFor(node) {
+  try {
+    if (node.type === "INSTANCE") {
+      const mc = node.mainComponent;
+      if (mc) {
+        if (mc.parent && mc.parent.type === "COMPONENT_SET") return mc.parent.name.trim();
+        // имя вида "Size=B 48px, Color=Ghost" — это имя варианта, а не компонента
+        if (!/^[^=,]+=/.test(mc.name)) return mc.name.trim();
+      }
+    } else if (node.type === "COMPONENT" && node.parent && node.parent.type === "COMPONENT_SET") {
+      return node.parent.name.trim();
+    }
+  } catch (e) {}
+  return node.name.trim();
+}
+
+function searchAgentVariantProps(node) {
+  let props = null;
+  try {
+    if (node.type === "INSTANCE" && node.componentProperties) {
+      props = {};
+      Object.keys(node.componentProperties).forEach(k => {
+        const p = node.componentProperties[k];
+        if (p && p.type === "VARIANT") props[k] = p.value;
+      });
+    } else if (node.type === "COMPONENT" && node.parent && node.parent.type === "COMPONENT_SET") {
+      props = node.variantProperties;
+    }
+  } catch (e) {}
+  return props || {};
+}
+
+function buildSearchAgentUrl(node) {
+  let url = "http://127.0.0.1:8000/?q=" + encodeURIComponent(searchAgentNameFor(node));
+  const props = searchAgentVariantProps(node);
+  Object.keys(props).forEach(name => {
+    const value = String(props[name]).trim();
+    if (!value) return;
+    url += "&prop_" + encodeURIComponent(name.trim().replace(/\s+/g, "_")) + "=" + encodeURIComponent(value);
+  });
+  return url;
+}
+
 figma.ui.onmessage = async (msg) => {
   if (msg.type === "resize") {
     figma.ui.resize(msg.width, msg.height || 58);
@@ -475,8 +527,7 @@ figma.ui.onmessage = async (msg) => {
       return;
     }
     if (sel.length > 1) figma.notify("Ищу по первому выделенному слою");
-    const name = sel[0].name.trim();
-    figma.openExternal("http://127.0.0.1:8000/?q=" + encodeURIComponent(name));
+    figma.openExternal(buildSearchAgentUrl(sel[0]));
     return;
   }
   if (msg.type === "saveOrder") {
