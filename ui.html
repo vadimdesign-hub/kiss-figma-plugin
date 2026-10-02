@@ -680,6 +680,42 @@
       border: 1px solid var(--btn-blue-fg);
     }
 
+    /* "Search Agent" — AI-кнопка: плавно перетекающая градиентная "аврора"
+       из нескольких радиальных пятен (циан → розовый → фиолетовый → синий),
+       которые медленно дрейфуют. Цвет не зависит от светлой/тёмной темы. */
+    .tool-btn.tool-btn-ai,
+    .btn-preview-item.tool-btn-ai {
+      --svg-stroke: #fff;
+      background-color: #4f46e5;
+      background-image:
+        radial-gradient(circle at 14% 18%, #22d3ee 0%, rgba(34, 211, 238, 0) 55%),
+        radial-gradient(circle at 92% 8%, #f472b6 0%, rgba(244, 114, 182, 0) 52%),
+        radial-gradient(circle at 78% 96%, #a855f7 0%, rgba(168, 85, 247, 0) 58%),
+        radial-gradient(circle at 4% 92%, #3b82f6 0%, rgba(59, 130, 246, 0) 52%);
+      background-size: 230% 230%;
+      background-position: 0% 0%;
+      animation: aiAuroraShift 7s ease-in-out infinite alternate;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 1px 6px rgba(139, 92, 246, 0.35);
+    }
+    .tool-btn.tool-btn-ai:hover { filter: brightness(1.12) saturate(1.15); }
+    .tool-btn.tool-btn-ai .btn-label,
+    .tool-btn.tool-btn-ai:hover .btn-label,
+    .tool-btn-ai .bp-label {
+      color: #fff;
+      font-weight: 500;
+      letter-spacing: -0.1px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+    }
+    @keyframes aiAuroraShift {
+      0%   { background-position: 0% 0%; }
+      50%  { background-position: 100% 40%; }
+      100% { background-position: 40% 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .tool-btn.tool-btn-ai,
+      .btn-preview-item.tool-btn-ai { animation: none; }
+    }
+
     /* Панель "Похожие → заменить" — два блока сверху (источники / цель),
        у каждого своя кнопка "Выбрать другой"; снизу панель кнопок действий */
     #simReplacePanel {
@@ -1592,6 +1628,7 @@
       arrowDown: SVG('<path d="M9 3v11"/><path d="M4.5 9.5L9 14l4.5-4.5"/>'),
       archiveBox: SVG('<rect x="2" y="3" width="14" height="4" rx="1"/><path d="M3 7v6.5A1.5 1.5 0 004.5 15h9a1.5 1.5 0 001.5-1.5V7"/><line x1="7" y1="10" x2="11" y2="10"/>'),
       pin: SVG('<circle cx="9" cy="5.5" r="3"/><line x1="9" y1="8.5" x2="9" y2="16"/>'),
+      searchAI: SVG('<circle cx="7.5" cy="7.5" r="5"/><path d="M11.5 11.5L16 16"/><path d="M7.5 4.8l.75 1.95 1.95.75-1.95.75-.75 1.95-.75-1.95-1.95-.75 1.95-.75z" fill="var(--svg-stroke)" stroke-width="0.8"/>'),
       copy: SVG('<rect x="7" y="7" width="9" height="9" rx="1.8"/><path d="M4 11H3a1.8 1.8 0 01-1.8-1.8V3.8A1.8 1.8 0 013 2h6.2A1.8 1.8 0 0111 3.8V5"/>'),
     };
     const menu = [
@@ -1768,11 +1805,11 @@
         how: "Выдели один или несколько объектов и нажми «Copy» — ссылки на все объекты, по одной на строку, окажутся в буфере обмена."
       },
       {
-        icon: IC.search, emojiIcon: "🔎",
-        label: "Найти в Search Agent",
-        getPreview(s) { const i = s === "emoji" ? "🔎" : IC.search; return `<div class="btn-preview"><div class="btn-preview-item" style="width:128px"><span class="bp-icon">${i}</span><span class="bp-label">Найти в Search Agent</span></div></div>`; },
-        description: `Берёт название выделенного слоя и открывает в браузере по умолчанию локальный инструмент поиска по макетам (<b>http://127.0.0.1:8000</b>) — сразу с этим названием в строке поиска.\n\nЕсли выделено несколько слоёв — ищет по первому из них (появится уведомление). Если ничего не выделено — подскажет выделить слой.\n\nСам плагин в сеть не ходит — просто открывает ссылку, поэтому отдельных разрешений не нужно. Если сервер инструмента не запущен, он стартует сам при открытии ссылки (служба автозапуска на порту 8000).`,
-        how: "Выдели слой (например инстанс кнопки) и нажми «Найти в Search Agent» — в браузере откроется страница поиска с названием слоя."
+        icon: IC.searchAI, emojiIcon: "✨",
+        label: "Search Agent",
+        getPreview(s) { const i = s === "emoji" ? "✨" : IC.searchAI; return `<div class="btn-preview"><div class="btn-preview-item tool-btn-ai"><span class="bp-icon">${i}</span><span class="bp-label">Search Agent</span></div></div>`; },
+        description: `Кнопка с переливающимся AI-градиентом. Берёт название выделенного слоя и открывает в браузере по умолчанию локальный инструмент поиска по макетам (<b>http://127.0.0.1:8000</b>) — сразу с этим названием в строке поиска.\n\nЕсли выделено несколько слоёв — ищет по первому из них (появится уведомление). Если ничего не выделено — подскажет выделить слой.\n\nСам плагин в сеть не ходит — просто открывает ссылку, поэтому отдельных разрешений не нужно. Если сервер инструмента не запущен, он стартует сам при открытии ссылки (служба автозапуска на порту 8000).`,
+        how: "Выдели слой (например инстанс кнопки) и нажми «Search Agent» — в браузере откроется страница поиска с названием слоя."
       },
       {
         icon: IC.gear, emojiIcon: "⚙️",
@@ -1849,7 +1886,7 @@
       { icon: IC.custom, emojiIcon: "✨", label: "QA", command: "runAgent" },
       { icon: IC.archiveBox, emojiIcon: "🗄️", label: "Архив", command: "archiveSelection" },
       { icon: IC.copy, emojiIcon: "📋", label: "Copy", command: "copyLinks" },
-      { icon: IC.search, emojiIcon: "🔎", label: "Найти в Search Agent", command: "searchAgent", width: 128 },
+      { icon: IC.searchAI, emojiIcon: "✨", label: "Search Agent", command: "searchAgent" },
     ];
 
     let expandChkR = null, expandChkL = null;
@@ -2842,6 +2879,7 @@
             parent.postMessage({ pluginMessage: { type: "run", command: t.command, compact: pchk.checked, sectionGap } }, "*");
           });
         } else if (t.command === "searchAgent") {
+          btn.classList.add("tool-btn-ai");
           btn.addEventListener("click", () => {
             parent.postMessage({ pluginMessage: { type: "search-agent" } }, "*");
           });
@@ -3108,6 +3146,7 @@
           const chip = document.createElement("div");
           chip.className = "tool-btn tray-chip";
           if (t.command === "similarReplace") chip.classList.add("tool-btn-outline-blue");
+          if (t.command === "searchAgent") chip.classList.add("tool-btn-ai");
           chip.style.width = btnWidth(t) + "px";
           chip.style.height = btnHeight() + "px";
           chip.draggable = true;
