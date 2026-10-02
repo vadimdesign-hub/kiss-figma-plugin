@@ -1907,10 +1907,10 @@
       },
       {
         icon: IC.copy, emojiIcon: "📋",
-        label: "Copy",
-        getPreview(s) { const i = s === "emoji" ? "📋" : IC.copy; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Copy</span></div></div>`; },
-        description: `Выдели одну или несколько секций, фреймов или любых других объектов и нажми «Copy» — в буфер обмена попадут ссылки на все выделенные объекты, каждая с новой строки, в том же порядке, в котором объекты сейчас выделены. Удобно, когда нужно быстро прислать в чат ссылки сразу на несколько экранов или секций.\n\nСсылку на файл плагин обычно определяет сам (как и в «QA»). Если файл открыт так, что определить его не получается — появится уведомление об ошибке.`,
-        how: "Выдели один или несколько объектов и нажми «Copy» — ссылки на все объекты, по одной на строку, окажутся в буфере обмена."
+        label: "Copy Link",
+        getPreview(s) { const i = s === "emoji" ? "📋" : IC.copy; return `<div class="btn-preview"><div class="btn-preview-item"><span class="bp-icon">${i}</span><span class="bp-label">Copy Link</span></div></div>`; },
+        description: `Выдели одну или несколько секций, фреймов или любых других объектов и нажми «Copy Link» — в буфер обмена попадут ссылки на все выделенные объекты, каждая с новой строки, в том же порядке, в котором объекты сейчас выделены. Удобно, когда нужно быстро прислать в чат ссылки сразу на несколько экранов или секций.\n\nСсылку на файл плагин обычно определяет сам (как и в «QA»). Если файл открыт так, что определить его не получается — появится уведомление об ошибке.`,
+        how: "Выдели один или несколько объектов и нажми «Copy Link» — ссылки на все объекты, по одной на строку, окажутся в буфере обмена."
       },
       {
         icon: IC.sparkles, emojiIcon: "✨",
@@ -1993,7 +1993,7 @@
       ]},
       { icon: IC.custom, emojiIcon: "✨", label: "QA", command: "runAgent" },
       { icon: IC.archiveBox, emojiIcon: "🗄️", label: "Архив", command: "archiveSelection" },
-      { icon: IC.copy, emojiIcon: "📋", label: "Copy", command: "copyLinks" },
+      { icon: IC.copy, emojiIcon: "📋", label: "Copy Link", command: "copyLinks" },
       { icon: IC.sparkles, emojiIcon: "✨", label: "Agent", command: "searchAgent" },
     ];
 
